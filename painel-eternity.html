@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eternity — Painel de Controle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=gg+sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0f; --bg2:#101218; --panel:#13151d; --panel2:#181b25;
+    --line:#23262f; --line2:#2d313d;
+    --txt:#e7e9ee; --txt2:#9aa0ad; --txt3:#5f6573;
+    --acc:#00e08a; --acc-dim:#00e08a22; --acc2:#5b8cff; --acc2-dim:#5b8cff1a;
+    --violet:#9d6bff; --violet-dim:#9d6bff1a;
+    --warn:#ffb020; --warn-dim:#ffb02018; --bad:#ff5470; --bad-dim:#ff547018;
+    --pink:#ff6bd6; --pink-dim:#ff6bd61a; --cyan:#22d3ee; --cyan-dim:#22d3ee1a;
+    --radius:14px;
+    /* discord palette para o preview */
+    --dc-bg:#313338; --dc-card:#2b2d31; --dc-embed:#2b2d31; --dc-text:#dbdee1; --dc-muted:#949ba4; --dc-blue:#00a8fc; --dc-name:#f2f3f5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg); color:var(--txt); font-family:'Sora',sans-serif; font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;}
+  body[data-mode="store"]{background-image:radial-gradient(900px 500px at 85% -10%, #12281f 0%, transparent 60%),radial-gradient(700px 400px at 0% 100%, #141a2e 0%, transparent 55%)}
+  body[data-mode="platform"]{background-image:radial-gradient(900px 500px at 85% -10%, #1c1633 0%, transparent 60%),radial-gradient(700px 400px at 0% 100%, #141a2e 0%, transparent 55%)}
+  .mono{font-family:'JetBrains Mono',monospace}
+  /* ICON SYSTEM */
+  .ico{width:18px;height:18px;flex:none}
+  .ico-sm{width:15px;height:15px;flex:none;vertical-align:-2px}
+  .ico-nav{width:17px;height:17px;flex:none}
+  .ico-ci{width:19px;height:19px;flex:none}
+  .app{display:grid; grid-template-columns:252px 1fr; min-height:100vh}
+  .side{border-right:1px solid var(--line); padding:18px 14px; display:flex; flex-direction:column; gap:3px; position:sticky; top:0; height:100vh; overflow-y:auto}
+  .side::-webkit-scrollbar{width:6px}.side::-webkit-scrollbar-thumb{background:var(--line2);border-radius:10px}
+  .brand{display:flex; align-items:center; gap:11px; padding:6px 8px 12px}
+  .logo{width:34px; height:34px; border-radius:9px; display:grid; place-items:center; font-weight:800; font-size:18px; transition:.3s}
+  body[data-mode="store"] .logo{background:linear-gradient(135deg,var(--acc),#00b56e); color:#04130c; box-shadow:0 0 22px var(--acc-dim)}
+  body[data-mode="platform"] .logo{background:linear-gradient(135deg,var(--violet),#6b3bff); color:#fff; box-shadow:0 0 22px var(--violet-dim)}
+  .brand b{font-size:16px; letter-spacing:-.3px}
+  .brand span{display:block; font-size:11px; color:var(--txt3); font-weight:500}
+  .modesw{background:var(--panel); border:1px solid var(--line); border-radius:11px; padding:4px; display:flex; gap:3px; margin-bottom:6px}
+  .modesw button{flex:1; background:none; border:none; color:var(--txt3); font-family:inherit; font-size:11.5px; font-weight:600; padding:8px 6px; border-radius:8px; cursor:pointer; transition:.18s; display:flex;align-items:center;justify-content:center;gap:6px}
+  body[data-mode="store"] .modesw button.store-on{background:var(--acc-dim); color:var(--acc)}
+  body[data-mode="platform"] .modesw button.plat-on{background:var(--violet-dim); color:var(--violet)}
+  .nav-label{font-size:10px; text-transform:uppercase; letter-spacing:1.3px; color:var(--txt3); padding:11px 10px 4px; font-weight:600}
+  .nav{display:flex; align-items:center; gap:10px; padding:8px 11px; border-radius:9px; color:var(--txt2); cursor:pointer; font-weight:500; font-size:13px; transition:.15s; border:1px solid transparent}
+  .nav:hover{background:var(--panel); color:var(--txt)}
+  body[data-mode="store"] .nav.on{background:var(--acc-dim); color:var(--acc); border-color:#1d3a2c}
+  body[data-mode="platform"] .nav.on{background:var(--violet-dim); color:var(--violet); border-color:#2c2347}
+  .nav .badge{margin-left:auto; background:var(--bad); color:#fff; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:20px}
+  .nav .badge.v{background:var(--violet)}
+  .group{display:none}.group.show{display:contents}
+  .side-foot{margin-top:auto; padding:12px 10px 4px; border-top:1px solid var(--line); display:flex; gap:10px; align-items:center}
+  .side-foot .ava{width:32px;height:32px;border-radius:50%;flex:none}
+  body[data-mode="store"] .side-foot .ava{background:linear-gradient(135deg,#5b8cff,#9d6bff)}
+  body[data-mode="platform"] .side-foot .ava{background:linear-gradient(135deg,var(--violet),var(--pink))}
+  .side-foot small{color:var(--txt3); font-size:11px}
+  .main{overflow:hidden}
+  .topbar{display:flex; align-items:center; gap:16px; padding:18px 30px; border-bottom:1px solid var(--line); position:sticky; top:0; background:rgba(10,11,15,.78); backdrop-filter:blur(12px); z-index:20}
+  .topbar h1{font-size:19px; font-weight:700; letter-spacing:-.4px}
+  .crumb{color:var(--txt3); font-size:12px; margin-top:1px}
+  .search{margin-left:auto; display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--line); padding:8px 13px; border-radius:10px; color:var(--txt3); width:210px; font-size:13px}
+  .search input{background:none;border:none;outline:none;color:var(--txt);font-family:inherit;width:100%;font-size:13px}
+  .pill-live{display:flex;align-items:center;gap:7px;background:var(--acc-dim);border:1px solid #1d3a2c;color:var(--acc);padding:7px 13px;border-radius:10px;font-size:12px;font-weight:600}
+  /* chip de dias do plano */
+  .plan-chip{display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s;border:1px solid}
+  .plan-chip{background:var(--acc2-dim);border-color:#2d3a5e;color:var(--acc2)}                 /* normal: azul */
+  .plan-chip.soon{background:var(--warn-dim);border-color:#3a2e10;color:var(--warn)}            /* <5 dias: amarelo */
+  .plan-chip.expired{background:var(--bad-dim);border-color:#3a1d24;color:var(--bad)}           /* vencido: vermelho */
+  .plan-chip:hover{filter:brightness(1.15)}
+  .plan-chip b{font-weight:700}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--acc);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 #00e08a88}70%{box-shadow:0 0 0 7px #00e08a00}100%{box-shadow:0 0 0 0 #00e08a00}}
+  .scope{display:none} .scope.on{display:block}
+  .view{padding:28px 30px; display:none; animation:fade .35s ease}
+  .view.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px}
+  .kpis.k3{grid-template-columns:repeat(3,1fr)}
+  .kpi{background:linear-gradient(160deg,var(--panel),var(--bg2)); border:1px solid var(--line); border-radius:var(--radius); padding:17px 19px; position:relative; overflow:hidden}
+  .kpi::after{content:'';position:absolute;right:-20px;top:-20px;width:90px;height:90px;border-radius:50%;filter:blur(20px)}
+  body[data-mode="store"] .kpi::after{background:var(--acc-dim)}
+  body[data-mode="platform"] .kpi::after{background:var(--violet-dim)}
+  .kpi .lbl{color:var(--txt2); font-size:11.5px; font-weight:500}
+  .kpi .val{font-size:25px; font-weight:700; margin:8px 0 5px; letter-spacing:-.8px}
+  .kpi .delta{font-size:11.5px; font-weight:600; display:flex; align-items:center; gap:4px}
+  .up{color:var(--acc)} .down{color:var(--bad)} .neu{color:var(--txt3)}
+  .grid2{display:grid; grid-template-columns:1.6fr 1fr; gap:14px; margin-bottom:14px}
+  .grid2e{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin-bottom:14px}
+  .card:last-child{margin-bottom:0}
+  .card h3{font-size:14px; font-weight:600; margin-bottom:3px; display:flex; align-items:center; gap:8px}
+  .card h3 .ico{color:var(--txt2)}
+  .card .sub{color:var(--txt3); font-size:12px; margin-bottom:16px}
+  .card-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px}
+  .chart{height:190px; display:flex; align-items:flex-end; gap:6px; padding-top:10px}
+  .bar{flex:1; border-radius:6px 6px 0 0; position:relative; transition:.5s; min-height:6px; opacity:.9}
+  body[data-mode="store"] .bar{background:linear-gradient(180deg,var(--acc),#00b56e44)}
+  body[data-mode="platform"] .bar{background:linear-gradient(180deg,var(--violet),#6b3bff44)}
+  .bar:hover{opacity:1}
+  .bar span{position:absolute; top:-22px; left:50%; transform:translateX(-50%); font-size:10px; color:var(--txt2); opacity:0; transition:.2s; white-space:nowrap; background:var(--bg2); padding:2px 6px; border-radius:5px; z-index:2}
+  .bar:hover span{opacity:1}
+  .chart-x{display:flex; gap:6px; margin-top:8px}
+  .chart-x div{flex:1; text-align:center; font-size:10px; color:var(--txt3)}
+  /* DONUT corrigido — número centralizado de verdade */
+  .donut-wrap{display:flex; align-items:center; gap:26px}
+  .donut{width:132px;height:132px;border-radius:50%;flex:none;position:relative;display:grid;place-items:center}
+  .donut::before{content:'';position:absolute;inset:18px;border-radius:50%;background:var(--panel)}
+  .donut .center{position:relative;text-align:center;line-height:1}
+  .donut .center b{font-size:23px;font-weight:700;letter-spacing:-.5px;display:block}
+  .donut .center small{font-size:10px;color:var(--txt3);display:block;margin-top:3px}
+  .legend{display:flex;flex-direction:column;gap:11px;font-size:13px;flex:1}
+  .legend div{display:flex;align-items:center;gap:9px;color:var(--txt2)}
+  .legend i{width:9px;height:9px;border-radius:3px;flex:none}
+  .legend b{margin-left:auto;color:var(--txt)}
+  table{width:100%; border-collapse:collapse}
+  th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--txt3); font-weight:600; padding:0 14px 12px}
+  td{padding:12px 14px; border-top:1px solid var(--line); font-size:13px}
+  tbody tr:hover{background:var(--bg2)}
+  .prod{display:flex; align-items:center; gap:11px}
+  .prod .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:none;background:var(--panel2);border:1px solid var(--line2);color:var(--txt2)}
+  .prod .ic .ico{width:17px;height:17px}
+  .prod small{display:block; color:var(--txt3); font-size:11px}
+  .tag{font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; white-space:nowrap}
+  .tag .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .t-ok{background:var(--acc-dim); color:var(--acc)}
+  .t-wait{background:var(--warn-dim); color:var(--warn)}
+  .t-fail{background:var(--bad-dim); color:var(--bad)}
+  .t-auto{background:#5b8cff18; color:var(--acc2)}
+  .t-vio{background:var(--violet-dim); color:var(--violet)}
+  .t-cyan{background:var(--cyan-dim); color:var(--cyan)}
+  .pgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+  .pcard{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; transition:.18s}
+  .pcard:hover{border-color:var(--line2); transform:translateY(-2px)}
+  .pcard .top{display:flex; align-items:center; gap:12px; margin-bottom:13px}
+  .pcard .ic{width:44px;height:44px;border-radius:11px;display:grid;place-items:center;background:var(--panel2);border:1px solid var(--line2);color:var(--txt2)}
+  .pcard .ic .ico{width:22px;height:22px}
+  .pcard h4{font-size:15px; font-weight:600}
+  .pcard .price{font-size:21px; font-weight:700; letter-spacing:-.5px; margin:5px 0}
+  .pcard .meta{display:flex; justify-content:space-between; font-size:12px; color:var(--txt3); padding-top:12px; border-top:1px solid var(--line); margin-top:12px}
+  .stockbar{height:5px; background:var(--line); border-radius:10px; overflow:hidden; margin-top:8px}
+  .stockbar i{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,var(--acc),#00b56e)}
+  .btn{color:#04130c; border:none; padding:9px 16px; border-radius:10px; font-family:inherit; font-weight:600; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:.15s; white-space:nowrap}
+  body[data-mode="store"] .btn{background:var(--acc)} body[data-mode="store"] .btn:hover{box-shadow:0 0 18px var(--acc-dim)}
+  body[data-mode="platform"] .btn{background:var(--violet); color:#fff} body[data-mode="platform"] .btn:hover{box-shadow:0 0 18px var(--violet-dim)}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:var(--panel); color:var(--txt2); border:1px solid var(--line)}
+  .btn.ghost:hover{color:var(--txt); border-color:var(--line2); box-shadow:none; filter:none}
+  .btn.sm{padding:6px 12px; font-size:12px}
+  .flow{display:flex; flex-direction:column; gap:2px}
+  .flow-step{display:flex; gap:13px; align-items:flex-start; padding:13px; border-radius:11px}
+  .flow-step:hover{background:var(--bg2)}
+  .flow-step .n{width:30px;height:30px;border-radius:8px;background:var(--acc-dim);color:var(--acc);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none;border:1px solid #1d3a2c}
+  .flow-step .n .ico{width:16px;height:16px}
+  .flow-step h5{font-size:13.5px;font-weight:600;margin-bottom:2px}
+  .flow-step p{font-size:12.5px;color:var(--txt3)}
+  .note{margin-top:6px;padding:13px 15px;background:#5b8cff10;border:1px solid #5b8cff22;border-radius:11px;font-size:12.5px;color:var(--txt2)}
+  .note b{color:var(--acc2)}
+  .note.warn{background:var(--warn-dim);border-color:#3a2e10}.note.warn b{color:var(--warn)}
+  .note.vio{background:var(--violet-dim);border-color:#2c2347}.note.vio b{color:var(--violet)}
+  .cfg-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+  .cfg-row:first-of-type{border-top:none}
+  .cfg-row .ci{width:38px;height:38px;border-radius:10px;background:var(--panel2);border:1px solid var(--line2);display:grid;place-items:center;flex:none;color:var(--txt2)}
+  .cfg-row .ct{flex:1}.cfg-row .ct b{font-size:13.5px}.cfg-row .ct p{font-size:12px;color:var(--txt3)}
+  .toggle{width:42px;height:24px;border-radius:20px;background:var(--line2);position:relative;cursor:pointer;transition:.2s;flex:none}
+  .toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s}
+  .toggle.on{background:var(--acc)}.toggle.on::after{left:21px}
+  .split-viz{display:flex;align-items:stretch;gap:0;margin:8px 0 4px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+  .split-viz>div{padding:16px;text-align:center}
+  .split-viz .sv-total{background:var(--panel2);flex:1.4}
+  .split-viz .sv-seller{background:var(--acc-dim);flex:3}
+  .split-viz .sv-fee{background:var(--violet-dim);flex:1}
+  .split-viz small{display:block;font-size:10.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+  .split-viz b{font-size:18px}
+  .arrow{display:grid;place-items:center;width:30px;color:var(--txt3);font-size:16px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .chip{background:var(--panel2);border:1px solid var(--line2);padding:6px 12px;border-radius:8px;font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:6px;cursor:pointer}
+  .chip.on{background:var(--acc-dim);border-color:#1d3a2c;color:var(--acc)}
+  .statline{display:flex;justify-content:space-between;padding:11px 0;border-top:1px solid var(--line);font-size:13px}
+  .statline:first-child{border:none}
+  .statline span{color:var(--txt2)} .statline b{font-weight:600}
+  .progress{height:8px;background:var(--line);border-radius:10px;overflow:hidden;margin:6px 0 14px}
+  .progress i{display:block;height:100%;border-radius:10px}
+  .bubble{padding:11px 14px;border-radius:12px;font-size:13px;max-width:82%;margin-bottom:10px}
+  .bubble.user{background:var(--panel2);border:1px solid var(--line2);margin-left:auto}
+  .bubble.ai{background:var(--acc-dim);border:1px solid #1d3a2c;color:var(--txt)}
+  .bubble small{display:block;font-size:10.5px;color:var(--txt3);margin-bottom:3px}
+  /* form inputs */
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);font-weight:600;margin-bottom:7px}
+  .field input,.field textarea,.field select{width:100%;background:var(--bg2);border:1px solid var(--line2);border-radius:9px;padding:10px 12px;color:var(--txt);font-family:inherit;font-size:13px;outline:none;transition:.15s}
+  .field input:focus,.field textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-dim)}
+  .field textarea{resize:vertical;min-height:74px;line-height:1.55}
+  .field .hint{font-size:11px;color:var(--txt3);margin-top:5px}
+  .colorrow{display:flex;gap:8px;align-items:center}
+  .swatch{width:30px;height:30px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:.15s}
+  .swatch.on{border-color:#fff}
+  /* ===== DISCORD EMBED PREVIEW (idêntico ao Discord) ===== */
+  .dc{background:var(--dc-bg);border-radius:12px;padding:18px 16px;font-family:'gg sans','Sora',sans-serif}
+  .dc-msg{display:flex;gap:16px}
+  .dc-ava{width:40px;height:40px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--acc),#00b56e);display:grid;place-items:center;color:#04130c;font-weight:700;overflow:hidden}
+  .dc-ava img{width:100%;height:100%;object-fit:cover}
+  .dc-body{flex:1;min-width:0}
+  .dc-head{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+  .dc-name{color:var(--dc-name);font-weight:600;font-size:15px}
+  .dc-bot{background:var(--acc2);color:#fff;font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;text-transform:uppercase;letter-spacing:.3px;display:inline-flex;align-items:center;gap:3px}
+  .dc-time{color:var(--dc-muted);font-size:12px}
+  .dc-embed{margin-top:6px;background:var(--dc-embed);border-radius:4px;border-left:4px solid var(--acc);padding:12px 16px 16px;max-width:432px;display:grid;grid-template-columns:1fr auto;gap:12px}
+  .dc-embed .e-main{min-width:0}
+  .dc-author{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .dc-author img{width:24px;height:24px;border-radius:50%}
+  .dc-author span{color:var(--dc-text);font-size:13px;font-weight:600}
+  .dc-title{color:#fff;font-size:16px;font-weight:600;margin-bottom:8px;line-height:1.3}
+  .dc-desc{color:var(--dc-text);font-size:14px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word}
+  .dc-fields{margin-top:10px;display:flex;flex-wrap:wrap;gap:10px}
+  .dc-f{min-width:120px}
+  .dc-f .fn{color:#fff;font-size:13px;font-weight:600;margin-bottom:2px}
+  .dc-f .fv{color:var(--dc-text);font-size:13px}
+  .dc-thumb{width:72px;height:72px;border-radius:6px;object-fit:cover;flex:none}
+  .dc-img{margin-top:12px;border-radius:6px;max-width:100%;max-height:240px;object-fit:cover;display:block}
+  .dc-footer{margin-top:10px;display:flex;align-items:center;gap:8px;color:var(--dc-muted);font-size:12px}
+  .dc-footer img{width:20px;height:20px;border-radius:50%}
+  .dc-btns{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+  .dc-btn{background:#4e5058;color:#fff;font-size:14px;font-weight:500;padding:8px 16px;border-radius:8px;border:none}
+  .dc-btn.primary{background:var(--acc);color:#04130c}
+  .dc-btn.success{background:#248046}
+  .dc-select{margin-top:10px;background:#1e1f22;border:1px solid #1e1f22;border-radius:8px;padding:10px 12px;color:var(--dc-muted);font-size:14px;max-width:432px;display:flex;justify-content:space-between;align-items:center}
+  .live-badge{font-size:10px;font-weight:600;color:var(--acc);background:var(--acc-dim);border:1px solid #1d3a2c;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);animation:pulse 1.8s infinite}
+  pre{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt2);overflow-x:auto;margin:0}
+  @media(max-width:1050px){.app{grid-template-columns:1fr}.side{display:none}.kpis,.kpis.k3{grid-template-columns:repeat(2,1fr)}.grid2,.grid2e{grid-template-columns:1fr}.pgrid{grid-template-columns:1fr 1fr}.dc-embed{grid-template-columns:1fr}}
+</style>
+</head><body data-mode="store">
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="logo">N</div><div><b>Eternity</b><span id="brandsub">painel de vendas</span></div></div>
+    <div class="modesw">
+      <button class="store-on" id="btn-store" onclick="setMode('store')"><svg class="ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M3 9 4.5 4h15L21 9M3 9h18M3 9v11h18V9M9 20v-6h6v6'/></svg> Minha Loja</button>
+      <button id="btn-plat" onclick="setMode('platform')"><svg class="ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M13 7 9 3 5 7l4 4M17 11l4 4-4 4-4-4M8 12l4 4M16 12l-4-4M3 21a5 5 0 0 0 5-5M3 16a8 8 0 0 1 8 8'/></svg> Plataforma</button>
+    </div>
+    <div class="group show" id="nav-store">
+      <div class="nav-label">Operação</div>
+      <div class="nav on" data-v="dash" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z'/></svg><span>Visão Geral</span></div>
+      <div class="nav" data-v="sales" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1zM8 7h8M8 11h8M8 15h5'/></svg><span>Vendas</span><span class="badge">7</span></div>
+      <div class="nav" data-v="prods" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'/><path d='m3.3 7 8.7 5 8.7-5M12 22V12'/></svg><span>Produtos</span></div>
+      <div class="nav" data-v="stock" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx='12' cy='5' rx='9' ry='3'/><path d='M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'/></svg><span>Estoque</span><span class="badge">2</span></div>
+      <div class="nav-label">Financeiro</div>
+      <div class="nav" data-v="pay" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/></svg><span>Pagamentos</span></div>
+      <div class="nav" data-v="wallet" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v3m0 0h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1z'/></svg><span>Recebimentos</span></div>
+      <div class="nav" data-v="coupons" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.8 8.8a2 2 0 0 0 2.8 0l6.4-6.4a2 2 0 0 0 0-2.8z'/><circle cx='7' cy='7' r='1.2'/></svg><span>Cupons &amp; Drops</span></div>
+      <div class="nav-label">Atendimento &amp; Comunidade</div>
+      <div class="nav" data-v="tickets" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg><span>Tickets &amp; IA</span><span class="badge">3</span></div>
+      <div class="nav" data-v="affiliates" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='m11 17 2 2a1 1 0 0 0 1.4 0l3.6-3.6a2 2 0 0 0 .6-1.4V7a2 2 0 0 0-.6-1.4l-2-2A2 2 0 0 0 14.6 3H9.4a2 2 0 0 0-1.4.6l-5 5'/><path d='m12 16-3-3M7 8 4 11a2 2 0 0 0 0 2.8l1.2 1.2a2 2 0 0 0 2.8 0L11 12'/></svg><span>Afiliados</span></div>
+      <div class="nav" data-v="economy" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='M14.8 9a3 3 0 0 0-2.8-2c-1.7 0-3 1-3 2.4 0 3.3 6 1.6 6 4.8 0 1.5-1.5 2.5-3.2 2.5A3 3 0 0 1 9 17M12 6v1.5M12 17v1.5'/></svg><span>Economia</span></div>
+      <div class="nav" data-v="giveaways" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='3' y='8' width='18' height='4' rx='1'/><path d='M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8'/><path d='M12 8S10.5 3 8 3a2.5 2.5 0 0 0 0 5zM12 8s1.5-5 4-5a2.5 2.5 0 0 1 0 5z'/></svg><span>Giveaways</span></div>
+      <div class="nav-label">Segurança</div>
+      <div class="nav" data-v="auth" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/><path d='m9 12 2 2 4-4'/></svg><span>Auth / Verificação</span></div>
+      <div class="nav" data-v="mod" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2'/><path d='M9.5 17.5 21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2'/></svg><span>Moderação</span></div>
+      <div class="nav-label">Sistema</div>
+      <div class="nav" data-v="custom" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='13.5' cy='6.5' r='1.5'/><circle cx='17.5' cy='10.5' r='1.5'/><circle cx='8.5' cy='7.5' r='1.5'/><circle cx='6.5' cy='12.5' r='1.5'/><path d='M12 2a10 10 0 0 0 0 20 2.5 2.5 0 0 0 2.5-2.5c0-.6-.2-1.2-.6-1.6-.4-.4-.6-1-.6-1.6A2.5 2.5 0 0 1 15.8 14H18a4 4 0 0 0 4-4 8 8 0 0 0-10-8z'/></svg><span>Customização</span></div>
+      <div class="nav" data-v="analytics" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M3 3v18h18'/><path d='m19 9-5 5-4-4-3 3'/></svg><span>Analytics</span></div>
+      <div class="nav" data-v="api" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M9 2v6M15 2v6M12 8H7a2 2 0 0 0-2 2v3a5 5 0 0 0 10 0v-3a2 2 0 0 0-2-2zM12 18v4'/></svg><span>Integrações &amp; API</span></div>
+      <div class="nav" data-v="arch" data-s="store"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 6.8 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1-2.7H3a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 4.6 6.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1H10a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 2.7 1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1 2.7h.1a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.2 1z'/></svg><span>Bot &amp; Arquitetura</span></div>
+    </div>
+    <div class="group" id="nav-plat">
+      <div class="nav-label">Plataforma</div>
+      <div class="nav on" data-v="pdash" data-s="platform"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z'/></svg><span>Métricas Globais</span></div>
+      <div class="nav" data-v="stores" data-s="platform"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M3 9 4.5 4h15L21 9M3 9h18M3 9v11h18V9M9 20v-6h6v6'/></svg><span>Lojas</span><span class="badgev">214</span></div>
+      <div class="nav" data-v="fees" data-s="platform"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='2' y='6' width='20' height='12' rx='2'/><circle cx='12' cy='12' r='2.5'/><path d='M6 12h.01M18 12h.01'/></svg><span>Receita &amp; Taxas</span></div>
+      <div class="nav" data-v="plans" data-s="platform"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4z'/><path d='M9 7v10' stroke-dasharray='2 2'/></svg><span>Planos &amp; Addons</span></div>
+      <div class="nav" data-v="pmod" data-s="platform"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'/><path d='M12 9v4M12 17h.01'/></svg><span>Moderação</span><span class="badge">5</span></div>
+      <div class="nav" data-v="health" data-s="platform"><svg class="ico-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M22 12h-4l-3 9L9 3l-3 9H2'/></svg><span>Saúde do sistema</span></div>
+    </div>
+    <div class="side-foot"><div class="ava"></div><div><b style="font-size:13px" id="footname">Loja Prime</b><small id="footrole">plano Escala</small></div></div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div><h1 id="vtitle">Visão Geral</h1><div class="crumb" id="vcrumb">Painel da loja · atualizado agora há pouco</div></div>
+      <div class="search"><svg class="ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg><input placeholder="Buscar…"></div>
+      <div class="plan-chip" id="planChip" title="Clique para gerenciar assinatura">
+        <svg class="ico-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13V9M9 2h6"/></svg>
+        <span><b id="planDays">23</b> dias · Eternity Completo</span>
+      </div>
+      <div class="pill-live"><span class="dot"></span> Bot online</div>
+    </div>
+    <div class="scope on" id="scope-store">
+      <section class="view on" id="v-dash">
+        <div class="kpis">
+          <div class="kpi"><div class="lbl">Faturamento (30d)</div><div class="val">R$ 48.920</div><div class="delta up">▲ 23,4%</div></div>
+          <div class="kpi"><div class="lbl">Vendas concluídas</div><div class="val">1.284</div><div class="delta up">▲ 18,1%</div></div>
+          <div class="kpi"><div class="lbl">Ticket médio</div><div class="val">R$ 38,10</div><div class="delta up">▲ 4,5%</div></div>
+          <div class="kpi"><div class="lbl">Conversão</div><div class="val">71,2%</div><div class="delta down">▼ 1,2%</div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><div class="card-head"><div><h3>Faturamento diário</h3><div class="sub">Últimos 14 dias · split via Mercado Pago</div></div><button class="btn ghost sm">Exportar</button></div><div class="chart" id="chart"></div><div class="chart-x" id="chartx"></div></div>
+          <div class="card"><h3>Métodos de pagamento</h3><div class="sub">Distribuição do mês</div><div class="donut-wrap"><div class="donut" style="background:conic-gradient(var(--acc) 0 52%, var(--acc2) 52% 78%, var(--warn) 78% 92%, var(--line2) 92% 100%)"><div class="center"><b>1.284</b><small>vendas</small></div></div><div class="legend"><div><i style="background:var(--acc)"></i> PIX auto <b>52%</b></div><div><i style="background:var(--acc2)"></i> PIX semi <b>26%</b></div><div><i style="background:var(--warn)"></i> Cartão <b>14%</b></div><div><i style="background:var(--line2)"></i> Cripto <b>8%</b></div></div></div></div>
+        </div>
+        <div class="card"><div class="card-head"><div><h3>Vendas recentes</h3><div class="sub">Tempo real via webhook do bot</div></div><button class="btn ghost sm">Ver todas</button></div>
+          <table><thead><tr><th>Produto</th><th>Comprador</th><th>Valor</th><th>Método</th><th>Status</th><th>Quando</th></tr></thead><tbody>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='7.5' cy='15.5' r='4.5'/><path d='m10.5 12.5 8-8M16 6l3 3M20 2l2 2'/></svg></div><div>Nitro 1 mês<small>key #A8F2</small></div></div></td><td class="mono">@lucas_dev</td><td class="mono">R$ 24,90</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td><td class="mono" style="color:var(--txt3)">há 2 min</td></tr>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='2' y='6' width='20' height='12' rx='4'/><path d='M7 11v2M6 12h2M15.5 11h.01M18 13h.01'/></svg></div><div>Conta Valorant<small>arquivo</small></div></div></td><td class="mono">@mari.gg</td><td class="mono">R$ 89,00</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td><td class="mono" style="color:var(--txt3)">há 11 min</td></tr>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19l1-5.8-4.3-4.1 5.9-.9z'/></svg></div><div>Cargo VIP<small>autorole</small></div></div></td><td class="mono">@pedrooo</td><td class="mono">R$ 15,00</td><td><span class="tag t-wait">PIX semi</span></td><td><span class="tag t-wait"><span class="d"></span>aguardando</span></td><td class="mono" style="color:var(--txt3)">há 14 min</td></tr>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='6' cy='18' r='3'/><circle cx='18' cy='16' r='3'/><path d='M9 18V5l12-2v13'/></svg></div><div>Spotify<small>key #C1B9</small></div></div></td><td class="mono">@joao.silva</td><td class="mono">R$ 19,90</td><td><span class="tag t-auto">cartão</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td><td class="mono" style="color:var(--txt3)">há 22 min</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+      <section class="view" id="v-sales">
+        <div class="kpis">
+          <div class="kpi"><div class="lbl">Hoje</div><div class="val">R$ 2.140</div><div class="delta up">▲ 62 vendas</div></div>
+          <div class="kpi"><div class="lbl">Aguardando PIX</div><div class="val">7</div><div class="delta neu">pendente</div></div>
+          <div class="kpi"><div class="lbl">Estornos (30d)</div><div class="val">1,8%</div><div class="delta up">saudável</div></div>
+          <div class="kpi"><div class="lbl">Entrega automática</div><div class="val">94%</div><div class="delta up">sem intervenção</div></div>
+        </div>
+        <div class="card"><div class="card-head"><div><h3>Todas as vendas</h3><div class="sub">Filtrável por status, método e produto</div></div><button class="btn">+ Venda manual</button></div>
+          <div class="chips" style="margin-bottom:16px"><div class="chip on">Todas</div><div class="chip">Entregues</div><div class="chip">Aguardando</div><div class="chip">Estornadas</div><div class="chip">Carrinho</div></div>
+          <table><thead><tr><th>ID</th><th>Produto</th><th>Comprador</th><th>Valor</th><th>Método</th><th>Status</th></tr></thead><tbody>
+            <tr><td class="mono" style="color:var(--txt3)">#10482</td><td>Nitro 1 mês</td><td class="mono">@lucas_dev</td><td class="mono">R$ 24,90</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td></tr>
+            <tr><td class="mono" style="color:var(--txt3)">#10481</td><td>Conta Valorant</td><td class="mono">@mari.gg</td><td class="mono">R$ 89,00</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td></tr>
+            <tr><td class="mono" style="color:var(--txt3)">#10480</td><td>Cargo VIP</td><td class="mono">@pedrooo</td><td class="mono">R$ 15,00</td><td><span class="tag t-wait">PIX semi</span></td><td><span class="tag t-wait"><span class="d"></span>aguardando</span></td></tr>
+            <tr><td class="mono" style="color:var(--txt3)">#10479</td><td>Spotify Premium</td><td class="mono">@joao.silva</td><td class="mono">R$ 19,90</td><td><span class="tag t-auto">cartão</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td></tr>
+            <tr><td class="mono" style="color:var(--txt3)">#10478</td><td>Robux 1k</td><td class="mono">@gamer_zr</td><td class="mono">R$ 42,00</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td></tr>
+            <tr><td class="mono" style="color:var(--txt3)">#10477</td><td>Gift Card R$50</td><td class="mono">@anaclara</td><td class="mono">R$ 50,00</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-fail"><span class="d"></span>estornado</span></td></tr>
+          </tbody></table>
+        </div>
+      </section>
+      <section class="view" id="v-prods">
+        <div class="card-head" style="margin-bottom:18px"><div><h3 style="font-size:16px">Catálogo de produtos</h3><div class="sub">8 produtos ativos · com subprodutos e variações</div></div><button class="btn">+ Novo produto</button></div>
+        <div class="pgrid">
+          <div class="pcard"><div class="top"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='7.5' cy='15.5' r='4.5'/><path d='m10.5 12.5 8-8M16 6l3 3M20 2l2 2'/></svg></div><div><h4>Nitro 1 mês</h4><span class="tag t-auto">auto · key</span></div></div><div class="price">R$ 24,90</div><div class="stockbar"><i style="width:72%"></i></div><div class="meta"><span>144 keys</span><span style="color:var(--acc)">312 vendas</span></div></div>
+          <div class="pcard"><div class="top"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='2' y='6' width='20' height='12' rx='4'/><path d='M7 11v2M6 12h2M15.5 11h.01M18 13h.01'/></svg></div><div><h4>Conta Valorant</h4><span class="tag t-auto">auto · arquivo</span></div></div><div class="price">R$ 89,00</div><div class="stockbar"><i style="width:24%"></i></div><div class="meta"><span style="color:var(--warn)">12 un.</span><span style="color:var(--acc)">88 vendas</span></div></div>
+          <div class="pcard"><div class="top"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19l1-5.8-4.3-4.1 5.9-.9z'/></svg></div><div><h4>Cargo VIP</h4><span class="tag t-auto">autorole · ∞</span></div></div><div class="price">R$ 15,00</div><div class="stockbar"><i style="width:100%"></i></div><div class="meta"><span>ilimitado</span><span style="color:var(--acc)">521 vendas</span></div></div>
+          <div class="pcard"><div class="top"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='6' cy='18' r='3'/><circle cx='18' cy='16' r='3'/><path d='M9 18V5l12-2v13'/></svg></div><div><h4>Spotify Premium</h4><span class="tag t-auto">auto · key</span></div></div><div class="price">R$ 19,90</div><div class="stockbar"><i style="width:58%"></i></div><div class="meta"><span>67 keys</span><span style="color:var(--acc)">203 vendas</span></div></div>
+          <div class="pcard"><div class="top"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M6 3h12l4 6-10 12L2 9z'/><path d='M2 9h20M9 3 6 9l6 12M15 3l3 6-6 12'/></svg></div><div><h4>Robux 1k</h4><span class="tag t-auto">auto · key</span></div></div><div class="price">R$ 42,00</div><div class="stockbar"><i style="width:41%"></i></div><div class="meta"><span>30 un.</span><span style="color:var(--acc)">96 vendas</span></div></div>
+          <div class="pcard"><div class="top"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='3' y='8' width='18' height='4' rx='1'/><path d='M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8'/><path d='M12 8S10.5 3 8 3a2.5 2.5 0 0 0 0 5zM12 8s1.5-5 4-5a2.5 2.5 0 0 1 0 5z'/></svg></div><div><h4>Gift Card R$50</h4><span class="tag t-fail">esgotado</span></div></div><div class="price">R$ 50,00</div><div class="stockbar"><i style="width:0%"></i></div><div class="meta"><span style="color:var(--bad)">0 un.</span><span style="color:var(--acc)">44 vendas</span></div></div>
+        </div>
+      </section>
+      <section class="view" id="v-stock">
+        <div class="kpis k3">
+          <div class="kpi"><div class="lbl">Itens em estoque</div><div class="val">253</div><div class="delta neu">somando todos os produtos</div></div>
+          <div class="kpi"><div class="lbl">Alertas de reposição</div><div class="val" style="color:var(--warn)">2</div><div class="delta neu">abaixo do mínimo</div></div>
+          <div class="kpi"><div class="lbl">Esgotados</div><div class="val" style="color:var(--bad)">1</div><div class="delta neu">venda bloqueada</div></div>
+        </div>
+        <div class="card"><h3>Tipos de estoque suportados</h3><div class="sub">Cada produto pode usar o tipo que faz sentido</div>
+          <div class="chips"><div class="chip on">Por linha (TXT)</div><div class="chip on">Unitário</div><div class="chip on">Arquivo</div><div class="chip on">Ghost (ilimitado)</div></div>
+        </div>
+        <div class="card"><div class="card-head"><div><h3>Inventário</h3><div class="sub">Reserva atômica — nunca vende a mesma key duas vezes</div></div><button class="btn">+ Adicionar estoque</button></div>
+          <table><thead><tr><th>Produto</th><th>Tipo</th><th>Disponível</th><th>Reservado</th><th>Vendido</th><th>Status</th></tr></thead><tbody>
+            <tr><td>Nitro 1 mês</td><td><span class="tag t-cyan">por linha</span></td><td class="mono">144</td><td class="mono">3</td><td class="mono">312</td><td><span class="tag t-ok"><span class="d"></span>ok</span></td></tr>
+            <tr><td>Conta Valorant</td><td><span class="tag t-cyan">arquivo</span></td><td class="mono" style="color:var(--warn)">12</td><td class="mono">1</td><td class="mono">88</td><td><span class="tag t-wait"><span class="d"></span>repor</span></td></tr>
+            <tr><td>Cargo VIP</td><td><span class="tag t-vio">ghost</span></td><td class="mono">∞</td><td class="mono">0</td><td class="mono">521</td><td><span class="tag t-ok"><span class="d"></span>ok</span></td></tr>
+            <tr><td>Robux 1k</td><td><span class="tag t-cyan">unitário</span></td><td class="mono" style="color:var(--warn)">30</td><td class="mono">2</td><td class="mono">96</td><td><span class="tag t-wait"><span class="d"></span>repor</span></td></tr>
+            <tr><td>Gift Card R$50</td><td><span class="tag t-cyan">por linha</span></td><td class="mono" style="color:var(--bad)">0</td><td class="mono">0</td><td class="mono">44</td><td><span class="tag t-fail"><span class="d"></span>esgotado</span></td></tr>
+          </tbody></table>
+        </div>
+      </section>
+      <section class="view" id="v-pay">
+        <div class="card"><h3>Métodos de pagamento</h3><div class="sub">Ative os que quiser. O cliente escolhe na hora da compra.</div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M13 2 3 14h9l-1 8 10-12h-9z'/></svg></div><div class="ct"><b>PIX automático — Mercado Pago</b><p>Split nativo · liquidação D+0 · webhook de confirmação</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M3 21h18M5 21V10M19 21V10M3 10l9-6 9 6M9 21v-6h6v6'/></svg></div><div class="ct"><b>PIX automático — Efí (Gerencianet)</b><p>Split nativo · certificado .p12 configurado</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M12 3 2 12l10 9 10-9z'/></svg></div><div class="ct"><b>PIX automático — Asaas / Pushin Pay</b><p>Provedores alternativos com split</p></div><div class="toggle"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1zM8 7h8M8 11h8M8 15h5'/></svg></div><div class="ct"><b>PIX semi-automático</b><p>Qualquer banco · cliente envia comprovante · equipe aprova</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/></svg></div><div class="ct"><b>Cartão de crédito</b><p>Via gateway · parcelamento opcional</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='M9.5 8h4a2 2 0 0 1 0 4h-4zm0 4h4.3a2 2 0 0 1 0 4H9.5zm0-4V6m0 12v-2m2-10v2m0 8v2'/></svg></div><div class="ct"><b>Criptomoedas</b><p>Bitcoin, Litecoin e outras · sem split</p></div><div class="toggle"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/><path d='m9 12 2 2 4-4'/></svg></div><div class="ct"><b>Anti-fraude &amp; bloqueio de contas</b><p>Detecta padrões suspeitos e bloqueia bancos/contas marcadas</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='2' y='6' width='20' height='12' rx='2'/><circle cx='12' cy='12' r='2.5'/><path d='M6 10v4M18 10v4'/></svg></div><div class="ct"><b>Cashback</b><p>Devolve % em saldo interno a cada compra</p></div><div class="toggle"></div></div>
+        </div>
+      </section>
+      <section class="view" id="v-wallet">
+        <div class="card" style="background:linear-gradient(135deg,#0d2b1e,#0a0b0f 70%); border:1px solid #1d3a2c; padding:28px; position:relative; overflow:hidden">
+          <div style="color:var(--acc); font-size:12px; font-weight:600; letter-spacing:.5px">RECEBIDO ESTE MÊS · DIRETO NA SUA CONTA</div>
+          <div style="font-size:42px; font-weight:800; letter-spacing:-1.5px; margin:8px 0 4px">R$ 47.038,52</div>
+          <div style="color:var(--txt2); font-size:13px; max-width:560px">Via split automático — o dinheiro nunca passa pela plataforma. A taxa de 2,9% já é descontada na origem.</div>
+          <div style="display:flex; gap:11px; margin-top:22px; flex-wrap:wrap"><button class="btn ghost">Ver extrato Mercado Pago</button><button class="btn ghost">Configurar conta de recebimento</button></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Como o split funciona</h3><div class="sub">Por que você não tem "saldo a sacar" — e isso é bom</div>
+            <div class="split-viz"><div class="sv-total"><small>cliente paga</small><b>R$ 100</b></div><div class="arrow">→</div><div class="sv-seller"><small>vai pra você</small><b style="color:var(--acc)">R$ 97,10</b></div><div class="arrow">→</div><div class="sv-fee"><small>taxa</small><b style="color:var(--violet)">R$ 2,90</b></div></div>
+            <div class="note" style="margin-top:14px">O provedor divide o pagamento na hora: sua parte cai direto na <b>sua</b> conta. Ninguém custodia dinheiro de terceiro — sem risco de virar instituição de pagamento.</div>
+          </div>
+          <div class="card"><h3>Últimos recebimentos</h3><div class="sub">Liquidação D+0 no PIX</div>
+            <table><thead><tr><th>Venda</th><th>Bruto</th><th>Você recebeu</th></tr></thead><tbody>
+              <tr><td>#10482 Nitro</td><td class="mono">R$ 24,90</td><td class="mono" style="color:var(--acc)">R$ 24,18</td></tr>
+              <tr><td>#10481 Valorant</td><td class="mono">R$ 89,00</td><td class="mono" style="color:var(--acc)">R$ 86,42</td></tr>
+              <tr><td>#10479 Spotify</td><td class="mono">R$ 19,90</td><td class="mono" style="color:var(--acc)">R$ 19,32</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </section>
+      <section class="view" id="v-coupons">
+        <div class="grid2e">
+          <div class="card"><div class="card-head"><div><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.8 8.8a2 2 0 0 0 2.8 0l6.4-6.4a2 2 0 0 0 0-2.8z'/><circle cx='7' cy='7' r='1.2'/></svg> Cupons de desconto</h3><div class="sub">Globais ou por produto</div></div><button class="btn sm">+ Cupom</button></div>
+            <table><thead><tr><th>Código</th><th>Desconto</th><th>Usos</th><th>Status</th></tr></thead><tbody>
+              <tr><td class="mono">BEMVINDO10</td><td>10%</td><td class="mono">142 / ∞</td><td><span class="tag t-ok"><span class="d"></span>ativo</span></td></tr>
+              <tr><td class="mono">BLACKFRIDAY</td><td>30%</td><td class="mono">88 / 100</td><td><span class="tag t-ok"><span class="d"></span>ativo</span></td></tr>
+              <tr><td class="mono">NITRO5</td><td>R$ 5,00</td><td class="mono">200 / 200</td><td><span class="tag t-fail"><span class="d"></span>esgotado</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="card"><div class="card-head"><div><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2 0-2.8a2 2 0 0 0-3 0zM12 15l-3-3a16 16 0 0 1 7-9c2.5 0 4 1.5 5 4a16 16 0 0 1-9 8zM9 12H4s.5-3 2-4 5 0 5 0M12 15v5s3-.5 4-2 0-5 0-5'/></svg> Drops agendados</h3><div class="sub">Lançamentos com hora marcada</div></div><button class="btn sm">+ Drop</button></div>
+            <div class="flow">
+              <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'/><path d='m3.3 7 8.7 5 8.7-5M12 22V12'/></svg></div><div><h5>Contas Steam — lote 50un</h5><p>Hoje às 20:00 · notifica @everyone · 50 em estoque</p></div><span class="tag t-wait"><span class="d"></span>em 4h</span></div>
+              <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'/><path d='m3.3 7 8.7 5 8.7-5M12 22V12'/></svg></div><div><h5>Gift Cards R$100</h5><p>Amanhã às 18:00 · preço promocional</p></div><span class="tag t-cyan">agendado</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='3' y='8' width='18' height='4' rx='1'/><path d='M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8'/><path d='M12 8S10.5 3 8 3a2.5 2.5 0 0 0 0 5zM12 8s1.5-5 4-5a2.5 2.5 0 0 1 0 5z'/></svg> Gift Cards</h3><div class="sub">Crédito que o cliente compra e presenteia</div>
+          <div class="chips"><div class="chip on">R$ 25 · 14 vendidos</div><div class="chip on">R$ 50 · 31 vendidos</div><div class="chip on">R$ 100 · 9 vendidos</div><div class="chip">+ criar valor</div></div>
+        </div>
+      </section>
+      <section class="view" id="v-tickets">
+        <div class="kpis k3">
+          <div class="kpi"><div class="lbl">Tickets abertos</div><div class="val">3</div><div class="delta neu">1 urgente</div></div>
+          <div class="kpi"><div class="lbl">Resolvidos pela IA</div><div class="val" style="color:var(--acc)">68%</div><div class="delta up">sem staff</div></div>
+          <div class="kpi"><div class="lbl">Tempo médio resposta</div><div class="val">2,1 min</div><div class="delta up">▼ com IA</div></div>
+        </div>
+        <div class="grid2">
+          <div class="card" style="padding:0"><div style="padding:20px 20px 0"><h3>Tickets</h3><div class="sub">Abertos automaticamente pelo bot</div></div>
+            <div class="flow-step" style="border-top:1px solid var(--line)"><div class="n" style="background:var(--bad-dim);color:var(--bad);border-color:#3a1d24"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'/><path d='M12 9v4M12 17h.01'/></svg></div><div><h5>Não recebi minha key — #10477</h5><p>@anaclara · há 35 min · produto esgotou na compra</p></div><span class="tag t-fail"><span class="d"></span>urgente</span></div>
+            <div class="flow-step" style="border-top:1px solid var(--line)"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg></div><div><h5>Como uso o cargo VIP?</h5><p>@pedrooo · há 1h · respondido pela IA</p></div><span class="tag t-ok">IA</span></div>
+            <div class="flow-step" style="border-top:1px solid var(--line)"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg></div><div><h5>PIX não confirmou</h5><p>@gamer_zr · há 2h · aguardando verificação</p></div><span class="tag t-wait"><span class="d"></span>aberto</span></div>
+          </div>
+          <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='4' y='8' width='16' height='12' rx='2'/><path d='M12 8V4M9 4h6M8.5 13h.01M15.5 13h.01M9 17h6'/></svg> IA no atendimento (Gemini)</h3><div class="sub">Responde quando a staff está offline · para quando alguém assume</div>
+            <div style="margin:8px 0">
+              <div class="bubble user"><small>@pedrooo</small>como eu uso o cargo VIP que comprei?</div>
+              <div class="bubble ai"><small>Eternity IA · treinada com seu FAQ</small>Seu cargo VIP já foi aplicado automaticamente! Ele dá acesso aos canais exclusivos e 10% de desconto nas próximas compras. Qualquer dúvida, a equipe assume em instantes.</div>
+            </div>
+            <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 6.8 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1-2.7H3a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 4.6 6.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1H10a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 2.7 1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1 2.7h.1a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.2 1z'/></svg></div><div class="ct"><b>Modelo: Gemini 2.5 Flash</b><p>Treinável com FAQ, políticas e exemplos da loja</p></div><div class="toggle on"></div></div>
+          </div>
+        </div>
+      </section>
+      <section class="view" id="v-affiliates">
+        <div class="kpis k3">
+          <div class="kpi"><div class="lbl">Revendedores ativos</div><div class="val">23</div><div class="delta up">▲ 4 no mês</div></div>
+          <div class="kpi"><div class="lbl">Vendas por indicação</div><div class="val">R$ 8.420</div><div class="delta up">17% do total</div></div>
+          <div class="kpi"><div class="lbl">Comissões a pagar</div><div class="val">R$ 1.260</div><div class="delta neu">via split</div></div>
+        </div>
+        <div class="card"><div class="card-head"><div><h3>Revendedores</h3><div class="sub">Desconto automático e comissão por venda</div></div><button class="btn">+ Convidar revendedor</button></div>
+          <table><thead><tr><th>Revendedor</th><th>Desconto</th><th>Vendas</th><th>Comissão</th><th>Status</th></tr></thead><tbody>
+            <tr><td class="mono">@reseller_top</td><td>50%</td><td class="mono">142</td><td class="mono" style="color:var(--acc)">R$ 640</td><td><span class="tag t-ok"><span class="d"></span>ativo</span></td></tr>
+            <tr><td class="mono">@vendedor_x</td><td>40%</td><td class="mono">88</td><td class="mono" style="color:var(--acc)">R$ 380</td><td><span class="tag t-ok"><span class="d"></span>ativo</span></td></tr>
+            <tr><td class="mono">@novato_22</td><td>30%</td><td class="mono">12</td><td class="mono" style="color:var(--acc)">R$ 90</td><td><span class="tag t-wait"><span class="d"></span>avaliação</span></td></tr>
+          </tbody></table>
+        </div>
+        <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1'/></svg> Programa de convites</h3><div class="sub">Membros ganham saldo ao trazer amigos</div>
+          <div class="chips"><div class="chip on">Recompensa: R$ 2,00 por indicação válida</div><div class="chip">Top indicador: @lucas_dev (38)</div></div>
+        </div>
+      </section>
+      <section class="view" id="v-economy">
+        <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='M14.8 9a3 3 0 0 0-2.8-2c-1.7 0-3 1-3 2.4 0 3.3 6 1.6 6 4.8 0 1.5-1.5 2.5-3.2 2.5A3 3 0 0 1 9 17M12 6v1.5M12 17v1.5'/></svg> Economia do servidor</h3><div class="sub">Moeda própria, loja de itens e engajamento</div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='M14.8 9a3 3 0 0 0-2.8-2c-1.7 0-3 1-3 2.4 0 3.3 6 1.6 6 4.8 0 1.5-1.5 2.5-3.2 2.5A3 3 0 0 1 9 17M12 6v1.5M12 17v1.5'/></svg></div><div class="ct"><b>Moeda interna — "Gemas"</b><p>Ganha por atividade, missões e compras (cashback)</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='8' cy='21' r='1'/><circle cx='19' cy='21' r='1'/><path d='M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 2-1.58l1.65-7.42H5.12'/></svg></div><div class="ct"><b>Loja de itens</b><p>Troca de gemas por cargos, descontos e produtos</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='5'/><circle cx='12' cy='12' r='1'/></svg></div><div class="ct"><b>Missões diárias</b><p>Tarefas que dão gemas e mantêm o servidor ativo</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.6V17a2 2 0 0 1-2 2H7M14 14.6V17a2 2 0 0 0 2 2h1M18 2H6v7a6 6 0 0 0 12 0z'/></svg></div><div class="ct"><b>Ranking</b><p>Tabela de líderes por gemas / atividade / compras</p></div><div class="toggle on"></div></div>
+        </div>
+        <div class="grid2e">
+          <div class="card"><h3>Top membros (gemas)</h3><div class="sub">Ranking do mês</div>
+            <table><tbody>
+              <tr><td>1º @lucas_dev</td><td class="mono" style="text-align:right;color:var(--warn)">12.400</td></tr>
+              <tr><td>2º @mari.gg</td><td class="mono" style="text-align:right">9.880</td></tr>
+              <tr><td>3º @pedrooo</td><td class="mono" style="text-align:right">7.210</td></tr>
+            </tbody></table>
+          </div>
+          <div class="card"><h3>Loja de itens</h3><div class="sub">Resgates com gemas</div>
+            <div class="chips"><div class="chip">Cargo Lendário · 5.000</div><div class="chip">Cupom 15% · 2.000</div><div class="chip">Nitro · 8.000</div></div>
+          </div>
+        </div>
+      </section>
+      <section class="view" id="v-giveaways">
+        <div class="card-head" style="margin-bottom:18px"><div><h3 style="font-size:16px;display:flex;align-items:center;gap:8px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='3' y='8' width='18' height='4' rx='1'/><path d='M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8'/><path d='M12 8S10.5 3 8 3a2.5 2.5 0 0 0 0 5zM12 8s1.5-5 4-5a2.5 2.5 0 0 1 0 5z'/></svg> Sorteios</h3><div class="sub">Participação por reação · múltiplos ganhadores · histórico</div></div><button class="btn">+ Criar sorteio</button></div>
+        <div class="grid2e">
+          <div class="card"><h3>Ativos</h3><div class="sub">Em andamento agora</div>
+            <div class="flow">
+              <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M3 21 8 9l7 7zM15 8a3 3 0 0 0 0-4M18 4a6 6 0 0 1 0 8M12.5 3.5h.01M19 9h.01M15 13l3 3'/></svg></div><div><h5>Nitro 3 meses</h5><p>284 participantes · 2 ganhadores · termina em 6h</p></div></div>
+              <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M3 21 8 9l7 7zM15 8a3 3 0 0 0 0-4M18 4a6 6 0 0 1 0 8M12.5 3.5h.01M19 9h.01M15 13l3 3'/></svg></div><div><h5>Gift Card R$50</h5><p>112 participantes · 1 ganhador · termina amanhã</p></div></div>
+            </div>
+          </div>
+          <div class="card"><h3>Encerrados</h3><div class="sub">Histórico</div>
+            <div class="flow">
+              <div class="flow-step"><div class="n" style="background:var(--line);color:var(--txt3);border:none"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='m9 12 2 2 4-4'/></svg></div><div><h5>Conta Valorant</h5><p>Ganhador: @mari.gg · 320 participantes</p></div></div>
+              <div class="flow-step"><div class="n" style="background:var(--line);color:var(--txt3);border:none"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='m9 12 2 2 4-4'/></svg></div><div><h5>R$ 100 em produtos</h5><p>Ganhador: @joao.silva · 510 participantes</p></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="view" id="v-auth">
+        <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/><path d='m9 12 2 2 4-4'/></svg> Auth / Verificação (OAuth2)</h3><div class="sub">Verifica e salva membros · recupera servidor após raid · controla acesso</div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='m9 12 2 2 4-4'/></svg></div><div class="ct"><b>Verificação OAuth2</b><p>Membro autoriza e recebe cargo verificado</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8'/></svg></div><div class="ct"><b>Salvar membros (pull)</b><p>Restaura membros verificados em um novo servidor</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg></div><div class="ct"><b>Detecção de contas alternativas</b><p>Identifica alts pelo fingerprint</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1'/></svg></div><div class="ct"><b>Análise de servidores em comum</b><p>Mostra onde mais o membro está</p></div><div class="toggle"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/></svg></div><div class="ct"><b>Persistência de benefícios</b><p>Remove cargos imediatamente ao sair do Auth</p></div><div class="toggle on"></div></div>
+        </div>
+        <div class="note warn"><b>Atenção legal (LGPD):</b> rastreio de IP, geolocalização e captura de e-mail exigem consentimento explícito do usuário e política de privacidade clara. Recomendo implementar com aviso visível e finalidade declarada — é onde a Ease assume risco que nós podemos evitar fazendo certo.</div>
+      </section>
+      <section class="view" id="v-mod">
+        <div class="kpis k3">
+          <div class="kpi"><div class="lbl">Ameaças bloqueadas (30d)</div><div class="val" style="color:var(--acc)">47</div><div class="delta up">raids/nukes barrados</div></div>
+          <div class="kpi"><div class="lbl">Contas fake removidas</div><div class="val">128</div><div class="delta neu">antifake ativo</div></div>
+          <div class="kpi"><div class="lbl">Último backup</div><div class="val">há 2h</div><div class="delta up">diário automático</div></div>
+        </div>
+        <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2'/><path d='M9.5 17.5 21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2'/></svg> Proteção do servidor</h3><div class="sub">Blindagem em camadas</div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='m5.6 5.6 12.8 12.8'/></svg></div><div class="ct"><b>Anti-raid / Anti-nuke</b><p>Detecta ações em massa e trava o servidor</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='4' y='8' width='16' height='12' rx='2'/><path d='M12 8V4M9 4h6M8.5 13h.01M15.5 13h.01M9 17h6'/></svg></div><div class="ct"><b>Antifake nas boas-vindas</b><p>Verificação antes de liberar acesso</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='4' y='11' width='16' height='10' rx='2'/><path d='M8 11V7a4 4 0 0 1 8 0v4'/></svg></div><div class="ct"><b>Trava automática de canais</b><p>Por horário, evento ou condição</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='8' y='3' width='8' height='4' rx='1'/><path d='M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2M9 12h6M9 16h4'/></svg></div><div class="ct"><b>Logs de auditoria</b><p>Registro imutável de todas as ações</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z'/><path d='M17 21v-8H7v8M7 3v5h8'/></svg></div><div class="ct"><b>Backup automático diário</b><p>Estrutura do servidor e dados</p></div><div class="toggle on"></div></div>
+        </div>
+      </section>
+      <section class="view" id="v-custom">
+        <div class="card-head" style="margin-bottom:18px"><div><h3 style="font-size:16px;display:flex;align-items:center;gap:8px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='13.5' cy='6.5' r='1.5'/><circle cx='17.5' cy='10.5' r='1.5'/><circle cx='8.5' cy='7.5' r='1.5'/><circle cx='6.5' cy='12.5' r='1.5'/><path d='M12 2a10 10 0 0 0 0 20 2.5 2.5 0 0 0 2.5-2.5c0-.6-.2-1.2-.6-1.6-.4-.4-.6-1-.6-1.6A2.5 2.5 0 0 1 15.8 14H18a4 4 0 0 0 4-4 8 8 0 0 0-10-8z'/></svg> Customização &amp; Editor de Embed</h3><div class="sub">Tudo que aparece no Discord você edita aqui e vê ao vivo do lado</div></div><div class="live-badge"><span class="live-dot"></span> preview ao vivo</div></div>
+
+        <div class="grid2e" style="align-items:start">
+          <!-- EDITOR -->
+          <div class="card">
+            <h3>Editor do embed</h3><div class="sub">Painel de produtos · loja</div>
+
+            <div class="field"><label>Nome do bot</label><input id="e-bot" value="Loja Prime" oninput="renderEmbed()"></div>
+            <div class="field"><label>Cor de destaque</label>
+              <div class="colorrow">
+                <div class="swatch on" style="background:#00e08a" data-color="#00e08a" onclick="pickColor(this)"></div>
+                <div class="swatch" style="background:#5b8cff" data-color="#5b8cff" onclick="pickColor(this)"></div>
+                <div class="swatch" style="background:#9d6bff" data-color="#9d6bff" onclick="pickColor(this)"></div>
+                <div class="swatch" style="background:#ff6bd6" data-color="#ff6bd6" onclick="pickColor(this)"></div>
+                <div class="swatch" style="background:#ffb020" data-color="#ffb020" onclick="pickColor(this)"></div>
+                <div class="swatch" style="background:#ff5470" data-color="#ff5470" onclick="pickColor(this)"></div>
+              </div>
+            </div>
+            <div class="field"><label>Autor (linha pequena no topo)</label><input id="e-author" value="🛒 Catálogo de produtos" oninput="renderEmbed()"></div>
+            <div class="field"><label>Título</label><input id="e-title" value="Bem-vindo à Loja Prime!" oninput="renderEmbed()"></div>
+            <div class="field"><label>Descrição</label><textarea id="e-desc" oninput="renderEmbed()">Selecione um produto no menu abaixo para comprar.
+
+Entrega **automática** após o pagamento via PIX. Qualquer dúvida, abra um ticket!</textarea><div class="hint">Suporta **negrito**, quebras de linha e emojis</div></div>
+            <div class="field"><label>URL da imagem grande (opcional)</label><input id="e-img" placeholder="https://..." oninput="renderEmbed()"></div>
+            <div class="field"><label>URL da thumbnail (canto direito, opcional)</label><input id="e-thumb" placeholder="https://..." oninput="renderEmbed()"></div>
+            <div class="field"><label>Texto do rodapé</label><input id="e-footer" value="Loja Prime · pagamento 100% seguro" oninput="renderEmbed()"></div>
+            <div class="field"><label>Texto do botão de compra</label><input id="e-btn" value="Comprar agora" oninput="renderEmbed()"></div>
+            <div class="field" style="margin-bottom:0"><label>Placeholder do menu de produtos</label><input id="e-select" value="▾ Selecione um produto" oninput="renderEmbed()"></div>
+          </div>
+
+          <!-- PREVIEW DISCORD -->
+          <div style="position:sticky;top:90px">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:7px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z'/><circle cx='12' cy='12' r='3'/></svg> Como vai aparecer no Discord</div>
+            <div class="dc">
+              <div class="dc-msg">
+                <div class="dc-ava" id="p-ava">L</div>
+                <div class="dc-body">
+                  <div class="dc-head"><span class="dc-name" id="p-name">Loja Prime</span><span class="dc-bot">BOT</span><span class="dc-time">hoje às 09:16</span></div>
+                  <div class="dc-embed" id="p-embed" style="border-left-color:#00e08a">
+                    <div class="e-main">
+                      <div class="dc-author" id="p-author-wrap"><span id="p-author">🛒 Catálogo de produtos</span></div>
+                      <div class="dc-title" id="p-title">Bem-vindo à Loja Prime!</div>
+                      <div class="dc-desc" id="p-desc"></div>
+                      <img class="dc-img" id="p-img" style="display:none">
+                      <div class="dc-footer" id="p-footer-wrap"><span id="p-footer">Loja Prime · pagamento 100% seguro</span></div>
+                    </div>
+                    <img class="dc-thumb" id="p-thumb" style="display:none">
+                  </div>
+                  <div class="dc-select" id="p-select"><span>▾ Selecione um produto</span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'/><path d='m3.3 7 8.7 5 8.7-5M12 22V12'/></svg></div>
+                  <div class="dc-btns"><button class="dc-btn success" id="p-btn">Comprar agora</button><button class="dc-btn">Ver carrinho</button><button class="dc-btn">Suporte</button></div>
+                </div>
+              </div>
+            </div>
+            <div class="note" style="margin-top:14px">Esse preview é renderizado com os mesmos estilos do Discord. O que você digitar à esquerda aparece aqui na hora — antes de publicar no servidor.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Outras personalizações (white-label)</h3><div class="sub">Identidade da loja e do bot</div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='4' y='8' width='16' height='12' rx='2'/><path d='M12 8V4M9 4h6M8.5 13h.01M15.5 13h.01M9 17h6'/></svg></div><div class="ct"><b>Avatar do bot</b><p>Imagem que aparece nas mensagens</p></div><button class="btn ghost sm">Upload</button></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='3' y='3' width='18' height='18' rx='2'/><circle cx='9' cy='9' r='2'/><path d='m21 15-5-5L5 21'/></svg></div><div class="ct"><b>Banner da loja</b><p>Aparece no topo do canal de vendas</p></div><button class="btn ghost sm">Upload</button></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg></div><div class="ct"><b>Mensagens automáticas</b><p>Boas-vindas, regras, avisos e lembretes</p></div><button class="btn ghost sm">Editar</button></div>
+        </div>
+      </section>
+      <section class="view" id="v-analytics">
+        <div class="kpis">
+          <div class="kpi"><div class="lbl">Receita total (90d)</div><div class="val">R$ 142K</div><div class="delta up">▲ 27%</div></div>
+          <div class="kpi"><div class="lbl">Clientes únicos</div><div class="val">3.418</div><div class="delta up">▲ 12%</div></div>
+          <div class="kpi"><div class="lbl">Recompra</div><div class="val">34%</div><div class="delta up">▲ 3%</div></div>
+          <div class="kpi"><div class="lbl">LTV médio</div><div class="val">R$ 118</div><div class="delta up">▲ 8%</div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Produtos mais rentáveis</h3><div class="sub">Por receita no período</div>
+            <div class="statline"><span>Cargo VIP</span><b>R$ 7.815</b></div><div class="progress"><i style="width:100%;background:var(--acc)"></i></div>
+            <div class="statline"><span>Conta Valorant</span><b>R$ 7.832</b></div><div class="progress"><i style="width:96%;background:var(--acc2)"></i></div>
+            <div class="statline"><span>Nitro 1 mês</span><b>R$ 7.768</b></div><div class="progress"><i style="width:90%;background:var(--violet)"></i></div>
+            <div class="statline"><span>Robux 1k</span><b>R$ 4.032</b></div><div class="progress"><i style="width:52%;background:var(--warn)"></i></div>
+          </div>
+          <div class="card"><h3>Conversão do funil</h3><div class="sub">Do clique à entrega</div>
+            <div class="statline"><span>Abriram a loja</span><b>4.812</b></div><div class="progress"><i style="width:100%;background:var(--acc2)"></i></div>
+            <div class="statline"><span>Geraram PIX</span><b>1.803</b></div><div class="progress"><i style="width:37%;background:var(--acc2)"></i></div>
+            <div class="statline"><span>Pagaram</span><b>1.284</b></div><div class="progress"><i style="width:27%;background:var(--acc)"></i></div>
+            <div class="note" style="margin-top:8px">71% de quem gera o PIX conclui o pagamento — acima da média.</div>
+          </div>
+        </div>
+      </section>
+      <section class="view" id="v-api">
+        <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M9 2v6M15 2v6M12 8H7a2 2 0 0 0-2 2v3a5 5 0 0 0 10 0v-3a2 2 0 0 0-2-2zM12 18v4'/></svg> Integrações &amp; API</h3><div class="sub">Webhooks pra integrar com qualquer sistema · documentação detalhada</div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M18 16.98h-5.99c-1.66 0-3.01-1.34-3.01-3 0-1.66 1.35-3 3.01-3H18M9 12a3 3 0 1 0-3-3M15 12l-3 5.2M9 12l-3 5.2a3 3 0 1 0 5.2 3'/></svg></div><div class="ct"><b>Webhook de vendas</b><p>Dispara em cada venda paga · POST pro seu endpoint</p></div><div class="toggle on"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='7.5' cy='15.5' r='4.5'/><path d='m10.5 12.5 8-8M16 6l3 3M20 2l2 2'/></svg></div><div class="ct"><b>API Key</b><p>nx_live_••••••••••3f9a</p></div><button class="btn ghost sm">Regenerar</button></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M22 2 11 13M22 2l-7 20-4-9-9-4z'/></svg></div><div class="ct"><b>Bot Telegram</b><p>Mesma loja, vendendo também no Telegram</p></div><div class="toggle"></div></div>
+          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='5' y='2' width='14' height='20' rx='2'/><path d='M12 18h.01'/></svg></div><div class="ct"><b>App mobile (iOS / Android)</b><p>Acompanhe vendas pelo celular</p></div><span class="tag t-cyan">disponível</span></div>
+        </div>
+        <div class="card"><h3>Exemplo de webhook</h3><div class="sub">O que seu sistema recebe a cada venda</div>
+          <pre>{
+  <span style="color:var(--acc2)">"event"</span>: <span style="color:var(--acc)">"sale.paid"</span>,
+  <span style="color:var(--acc2)">"sale_id"</span>: <span style="color:var(--acc)">"10482"</span>,
+  <span style="color:var(--acc2)">"product"</span>: <span style="color:var(--acc)">"Nitro 1 mês"</span>,
+  <span style="color:var(--acc2)">"amount"</span>: <span style="color:var(--warn)">24.90</span>,
+  <span style="color:var(--acc2)">"buyer"</span>: <span style="color:var(--acc)">"discord:1029..."</span>,
+  <span style="color:var(--acc2)">"delivered"</span>: <span style="color:var(--warn)">true</span>
+}</pre>
+        </div>
+      </section>
+      <section class="view" id="v-arch">
+        <div class="card-head" style="margin-bottom:18px"><div><h3 style="font-size:16px">Como o sistema inteiro se conecta</h3><div class="sub">Bot + Painel + Pagamentos — o fluxo de uma venda</div></div></div>
+        <div class="grid2">
+          <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='8' cy='21' r='1'/><circle cx='19' cy='21' r='1'/><path d='M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 2-1.58l1.65-7.42H5.12'/></svg> Anatomia de uma venda automática</h3><div class="sub">Do clique no Discord à entrega por DM</div>
+            <div class="flow">
+              <div class="flow-step"><div class="n">1</div><div><h5>Cliente clica no painel de produtos</h5><p>Bot mostra embed com Select Menu / botão.</p></div></div>
+              <div class="flow-step"><div class="n">2</div><div><h5>Bot gera cobrança PIX com split</h5><p>QR Code já com a divisão. Postado em thread privada.</p></div></div>
+              <div class="flow-step"><div class="n">3</div><div><h5>Webhook confirma o pagamento</h5><p>Provedor avisa o backend. Split na origem.</p></div></div>
+              <div class="flow-step"><div class="n">4</div><div><h5>Entrega automática</h5><p>Reserva item do estoque e envia por DM. Estoque cai.</p></div></div>
+              <div class="flow-step"><div class="n">5</div><div><h5>Tudo aparece no painel</h5><p>Venda e recebimento sincronizados.</p></div></div>
+            </div>
+          </div>
+          <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 6.8 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1-2.7H3a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 4.6 6.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1H10a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 2.7 1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1 2.7h.1a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.2 1z'/></svg> Stack proposta</h3><div class="sub">O que eu usaria pra construir de verdade</div>
+            <div class="flow">
+              <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='4' y='8' width='16' height='12' rx='2'/><path d='M12 8V4M9 4h6M8.5 13h.01M15.5 13h.01M9 17h6'/></svg></div><div><h5>Bot — discord.js v14 (Node)</h5><p>Slash commands, embeds, botões, threads. 24/7.</p></div></div>
+              <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 6.8 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1-2.7H3a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 4.6 6.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1H10a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 2.7 1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1 2.7h.1a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.2 1z'/></svg></div><div><h5>Backend — NestJS + Webhooks</h5><p>Liga bot, painel e pagamentos. Multi-tenant.</p></div></div>
+              <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='13.5' cy='6.5' r='1.5'/><circle cx='17.5' cy='10.5' r='1.5'/><circle cx='8.5' cy='7.5' r='1.5'/><circle cx='6.5' cy='12.5' r='1.5'/><path d='M12 2a10 10 0 0 0 0 20 2.5 2.5 0 0 0 2.5-2.5c0-.6-.2-1.2-.6-1.6-.4-.4-.6-1-.6-1.6A2.5 2.5 0 0 1 15.8 14H18a4 4 0 0 0 4-4 8 8 0 0 0-10-8z'/></svg></div><div><h5>Painel — React + este design</h5><p>Login via OAuth2 do Discord.</p></div></div>
+              <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx='12' cy='5' rx='9' ry='3'/><path d='M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'/></svg></div><div><h5>Banco — PostgreSQL + Redis</h5><p>Dados + fila de entrega.</p></div></div>
+              <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M13 2 3 14h9l-1 8 10-12h-9z'/></svg></div><div><h5>Pagamento — Mercado Pago / Efí (split)</h5><p>PIX com webhook + divisão automática.</p></div></div>
+            </div>
+            <div class="note" style="margin-top:14px">Com <b>split payment</b>, nenhuma parte do fluxo segura dinheiro de terceiros. Engenharia limpa, risco jurídico mínimo.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="scope" id="scope-platform">
+      <section class="view on" id="v-pdash">
+        <div class="kpis">
+          <div class="kpi"><div class="lbl">Volume transacionado (GMV 30d)</div><div class="val">R$ 3,82M</div><div class="delta up">▲ 31%</div></div>
+          <div class="kpi"><div class="lbl">Receita da plataforma</div><div class="val">R$ 135K</div><div class="delta up">▲ 24%</div></div>
+          <div class="kpi"><div class="lbl">Lojas ativas</div><div class="val">214</div><div class="delta up">▲ 19 novas</div></div>
+          <div class="kpi"><div class="lbl">MRR (assinaturas)</div><div class="val">R$ 24.3K</div><div class="delta up">▲ 12%</div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><div class="card-head"><div><h3>Volume transacionado por dia</h3><div class="sub">GMV agregado de todas as lojas</div></div><button class="btn ghost sm">Exportar</button></div><div class="chart" id="chart2"></div><div class="chart-x" id="chartx2"></div></div>
+          <div class="card"><h3>Lojas por plano</h3><div class="sub">Distribuição da base</div><div class="donut-wrap"><div class="donut" style="background:conic-gradient(var(--violet) 0 44%, var(--acc2) 44% 72%, var(--acc) 72% 100%)"><div class="center"><b>214</b><small>lojas</small></div></div><div class="legend"><div><i style="background:var(--violet)"></i> Escala <b>44%</b></div><div><i style="background:var(--acc2)"></i> Pro <b>28%</b></div><div><i style="background:var(--acc)"></i> Free <b>28%</b></div></div></div></div>
+        </div>
+        <div class="card"><div class="card-head"><div><h3>Maiores lojas por GMV</h3><div class="sub">Top performers do mês</div></div><button class="btn ghost sm">Ver ranking</button></div>
+          <table><thead><tr><th>Loja</th><th>Plano</th><th>GMV 30d</th><th>Vendas</th><th>Taxa gerada</th><th>Status</th></tr></thead><tbody>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.6V17a2 2 0 0 1-2 2H7M14 14.6V17a2 2 0 0 0 2 2h1M18 2H6v7a6 6 0 0 0 12 0z'/></svg></div><div>Loja Prime<small>discord.gg/prime</small></div></div></td><td><span class="tag t-vio">Escala</span></td><td class="mono">R$ 312K</td><td class="mono">8.1K</td><td class="mono" style="color:var(--acc)">R$ 9.048</td><td><span class="tag t-ok"><span class="d"></span>ativa</span></td></tr>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='5'/><circle cx='12' cy='12' r='1'/></svg></div><div>GG Store<small>discord.gg/ggstore</small></div></div></td><td><span class="tag t-vio">Escala</span></td><td class="mono">R$ 198K</td><td class="mono">5.2K</td><td class="mono" style="color:var(--acc)">R$ 5.742</td><td><span class="tag t-ok"><span class="d"></span>ativa</span></td></tr>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M13 2 3 14h9l-1 8 10-12h-9z'/></svg></div><div>FastKeys<small>discord.gg/fastkeys</small></div></div></td><td><span class="tag t-auto">Pro</span></td><td class="mono">R$ 144K</td><td class="mono">3.9K</td><td class="mono" style="color:var(--acc)">R$ 4.176</td><td><span class="tag t-ok"><span class="d"></span>ativa</span></td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <section class="view" id="v-stores">
+        <div class="card-head" style="margin-bottom:18px"><div><h3 style="font-size:16px">Todas as lojas</h3><div class="sub">214 lojas · 198 ativas · 16 suspensas</div></div><button class="btn">+ Convidar loja</button></div>
+        <div class="card">
+          <table><thead><tr><th>Loja</th><th>Dono</th><th>Plano</th><th>GMV total</th><th>Entrou</th><th>Status</th></tr></thead><tbody>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.6V17a2 2 0 0 1-2 2H7M14 14.6V17a2 2 0 0 0 2 2h1M18 2H6v7a6 6 0 0 0 12 0z'/></svg></div><div>Loja Prime</div></div></td><td class="mono">@prime_owner</td><td><span class="tag t-vio">Escala</span></td><td class="mono">R$ 1,2M</td><td class="mono" style="color:var(--txt3)">jan/25</td><td><span class="tag t-ok"><span class="d"></span>ativa</span></td></tr>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='5'/><circle cx='12' cy='12' r='1'/></svg></div><div>GG Store</div></div></td><td class="mono">@gg_admin</td><td><span class="tag t-vio">Escala</span></td><td class="mono">R$ 740K</td><td class="mono" style="color:var(--txt3)">fev/25</td><td><span class="tag t-ok"><span class="d"></span>ativa</span></td></tr>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M13 2 3 14h9l-1 8 10-12h-9z'/></svg></div><div>FastKeys</div></div></td><td class="mono">@fast_dev</td><td><span class="tag t-auto">Pro</span></td><td class="mono">R$ 510K</td><td class="mono" style="color:var(--txt3)">mar/25</td><td><span class="tag t-ok"><span class="d"></span>ativa</span></td></tr>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='2' y='6' width='20' height='12' rx='4'/><path d='M7 11v2M6 12h2M15.5 11h.01M18 13h.01'/></svg></div><div>NeoGames</div></div></td><td class="mono">@neo_store</td><td><span class="tag t-auto">Pro</span></td><td class="mono">R$ 280K</td><td class="mono" style="color:var(--txt3)">abr/25</td><td><span class="tag t-wait"><span class="d"></span>revisão</span></td></tr>
+            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='m5.6 5.6 12.8 12.8'/></svg></div><div>SpamShop</div></div></td><td class="mono">@unknown_x</td><td><span class="tag t-fail">Free</span></td><td class="mono">R$ 2K</td><td class="mono" style="color:var(--txt3)">mai/25</td><td><span class="tag t-fail"><span class="d"></span>suspensa</span></td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <section class="view" id="v-fees">
+        <div class="kpis">
+          <div class="kpi"><div class="lbl">Receita de taxas (30d)</div><div class="val">R$ 110.7K</div><div class="delta up">▲ 28%</div></div>
+          <div class="kpi"><div class="lbl">Receita de assinaturas</div><div class="val">R$ 24.3K</div><div class="delta up">▲ 12%</div></div>
+          <div class="kpi"><div class="lbl">Taxa média efetiva</div><div class="val">2,9%</div><div class="delta neu">por transação</div></div>
+          <div class="kpi"><div class="lbl">Receita total</div><div class="val">R$ 135K</div><div class="delta up">▲ 24%</div></div>
+        </div>
+        <div class="card"><h3>De onde vem a receita</h3><div class="sub">No modelo split, a plataforma fatura sem segurar dinheiro</div>
+          <div class="flow">
+            <div class="flow-step"><div class="n" style="background:var(--violet-dim);color:var(--violet);border-color:#2c2347"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M19 5 5 19'/><circle cx='6.5' cy='6.5' r='2.5'/><circle cx='17.5' cy='17.5' r='2.5'/></svg></div><div><h5>Taxa por transação — 82%</h5><p>R$ 110,7K · na origem do split. Escala com o volume das lojas.</p></div></div>
+            <div class="flow-step"><div class="n" style="background:var(--violet-dim);color:var(--violet);border-color:#2c2347"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='2' y='6' width='20' height='12' rx='2'/><circle cx='12' cy='12' r='2.5'/><path d='M6 12h.01M18 12h.01'/></svg></div><div><h5>Assinaturas mensais — 18%</h5><p>R$ 24,3K · planos Pro e Escala. Receita recorrente (MRR).</p></div></div>
+          </div>
+          <div class="note vio"><b>Modelo saudável:</b> a receita cresce com o GMV das lojas sem você nunca custodiar dinheiro de terceiro.</div>
+        </div>
+      </section>
+
+      <section class="view" id="v-plans">
+        <div class="card-head" style="margin-bottom:18px"><div><h3 style="font-size:16px;display:flex;align-items:center;gap:8px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4z'/><path d='M9 7v10' stroke-dasharray='2 2'/></svg> Plano &amp; Assinantes</h3><div class="sub">Plano único · tudo incluso · um preço pra todos</div></div><button class="btn">Editar plano</button></div>
+        <div class="kpis">
+          <div class="kpi"><div class="lbl">Preço do plano</div><div class="val">R$ 49,90</div><div class="delta neu">por mês · tudo incluso</div></div>
+          <div class="kpi"><div class="lbl">Assinantes ativos</div><div class="val">214</div><div class="delta up">▲ 19 no mês</div></div>
+          <div class="kpi"><div class="lbl">Em teste grátis</div><div class="val">37</div><div class="delta neu">7 dias de trial</div></div>
+          <div class="kpi"><div class="lbl">Expiram em 5 dias</div><div class="val" style="color:var(--warn)">12</div><div class="delta neu">avisar/renovar</div></div>
+        </div>
+        <div class="card">
+          <h3>Eternity Completo — tudo que está incluso</h3><div class="sub">Sem recurso travado. É isso que quebra a concorrência.</div>
+          <div class="chips">
+            <div class="chip on">Lojas ilimitadas</div><div class="chip on">PIX com split</div><div class="chip on">White-label</div><div class="chip on">IA nos tickets</div><div class="chip on">Auth / verificação</div><div class="chip on">Cupons &amp; drops</div><div class="chip on">Afiliados</div><div class="chip on">Economia</div><div class="chip on">Giveaways</div><div class="chip on">Moderação</div><div class="chip on">Telegram</div><div class="chip on">API + webhooks</div><div class="chip on">Suporte prioritário</div>
+          </div>
+          <div class="note vio" style="margin-top:16px"><b>Estratégia de preço único:</b> um valor justo com tudo liberado elimina a paralisia de escolha e tira clientes de concorrentes que escondem recursos atrás de planos caros.</div>
+        </div>
+      </section>
+
+      <section class="view" id="v-pmod">
+        <div class="card-head" style="margin-bottom:18px"><div><h3 style="font-size:16px;display:flex;align-items:center;gap:8px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'/><path d='M12 9v4M12 17h.01'/></svg> Moderação da plataforma</h3><div class="sub">Lojas sinalizadas para revisão · proteção da reputação</div></div></div>
+        <div class="card" style="padding:0">
+          <div class="flow-step" style="border-top:1px solid var(--line)"><div class="n" style="background:var(--bad-dim);color:var(--bad);border-color:#3a1d24"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'/><path d='M12 9v4M12 17h.01'/></svg></div><div><h5>SpamShop — denúncias de golpe</h5><p>@unknown_x · 8 denúncias · GMV baixo · contas alt detectadas</p></div><button class="btn sm" style="margin-left:auto">Revisar</button></div>
+          <div class="flow-step" style="border-top:1px solid var(--line)"><div class="n" style="background:var(--warn-dim);color:var(--warn);border-color:#3a2e10"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M19 5 5 19'/><circle cx='6.5' cy='6.5' r='2.5'/><circle cx='17.5' cy='17.5' r='2.5'/></svg></div><div><h5>NeoGames — pico anormal de estornos</h5><p>@neo_store · 14% estornos · possível chargeback fraud</p></div><button class="btn sm" style="margin-left:auto">Revisar</button></div>
+          <div class="flow-step" style="border-top:1px solid var(--line)"><div class="n" style="background:var(--warn-dim);color:var(--warn);border-color:#3a2e10"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg></div><div><h5>3 lojas — produtos proibidos</h5><p>Triagem automática sinalizou termos de risco</p></div><button class="btn sm" style="margin-left:auto">Revisar</button></div>
+        </div>
+        <div class="note vio"><b>Por que isso importa:</b> uma plataforma de pagamentos vive de reputação com os provedores. Cortar fraude rápido protege o split de todo mundo.</div>
+      </section>
+
+      <section class="view" id="v-health">
+        <div class="kpis">
+          <div class="kpi"><div class="lbl">Uptime do bot (30d)</div><div class="val">99,97%</div><div class="delta up">alvo 99,9%</div></div>
+          <div class="kpi"><div class="lbl">Latência entrega</div><div class="val">1,4s</div><div class="delta up">PIX → DM</div></div>
+          <div class="kpi"><div class="lbl">Webhooks falhos (24h)</div><div class="val">0,02%</div><div class="delta up">com retry</div></div>
+          <div class="kpi"><div class="lbl">Shards Discord</div><div class="val">6 / 6</div><div class="delta up">online</div></div>
+        </div>
+        <div class="card"><h3>Eventos do sistema</h3><div class="sub">Monitoramento em tempo real</div>
+          <div class="flow">
+            <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='m9 12 2 2 4-4'/></svg></div><div><h5>Backup automático concluído</h5><p>PostgreSQL · há 2h · 4,2 GB</p></div><span class="tag t-ok"><span class="d"></span>ok</span></div>
+            <div class="flow-step"><div class="n" style="background:var(--warn-dim);color:var(--warn);border-color:#3a2e10"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M18 16.98h-5.99c-1.66 0-3.01-1.34-3.01-3 0-1.66 1.35-3 3.01-3H18M9 12a3 3 0 1 0-3-3M15 12l-3 5.2M9 12l-3 5.2a3 3 0 1 0 5.2 3'/></svg></div><div><h5>Retry de webhook — Mercado Pago</h5><p>3 eventos reenviados com sucesso · há 5h</p></div><span class="tag t-wait"><span class="d"></span>resolvido</span></div>
+            <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='m9 12 2 2 4-4'/></svg></div><div><h5>Auto-restart do shard 3</h5><p>Reconectado em 1,1s · sem perda de venda · ontem</p></div><span class="tag t-ok"><span class="d"></span>ok</span></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<script>
+  const titles={
+    dash:['Visão Geral','Painel da loja · atualizado agora há pouco'],
+    sales:['Vendas','Histórico e pedidos em tempo real'],
+    prods:['Produtos','Catálogo, subprodutos e variações'],
+    stock:['Estoque','Inventário com reserva atômica'],
+    pay:['Pagamentos','Métodos e anti-fraude'],
+    wallet:['Recebimentos','Split automático — direto na sua conta'],
+    coupons:['Cupons & Drops','Descontos, lançamentos e gift cards'],
+    tickets:['Tickets & IA','Suporte automatizado com Gemini'],
+    affiliates:['Afiliados','Revendedores e convites'],
+    economy:['Economia','Moeda interna e engajamento'],
+    giveaways:['Giveaways','Sorteios automatizados'],
+    auth:['Auth / Verificação','OAuth2, anti-alt e fingerprint'],
+    mod:['Moderação','Anti-raid, antifake e backup'],
+    custom:['Customização','Editor de embed com preview ao vivo'],
+    analytics:['Analytics','Métricas de receita e funil'],
+    api:['Integrações & API','Webhooks, Telegram e mobile'],
+    arch:['Bot & Arquitetura','Como tudo se conecta'],
+    pdash:['Métricas Globais','Plataforma · visão consolidada'],
+    stores:['Lojas','Todas as lojas da plataforma'],
+    fees:['Receita & Taxas','De onde vem o dinheiro'],
+    plans:['Planos & Addons','Monetização da plataforma'],
+    pmod:['Moderação','Lojas sinalizadas para revisão'],
+    health:['Saúde do sistema','Uptime, latência e monitoramento']
+  };
+  function setMode(m){
+    document.body.dataset.mode=m;
+    document.getElementById('btn-store').classList.toggle('store-on',m==='store');
+    document.getElementById('btn-plat').classList.toggle('plat-on',m==='platform');
+    document.getElementById('nav-store').classList.toggle('show',m==='store');
+    document.getElementById('nav-plat').classList.toggle('show',m==='platform');
+    document.getElementById('scope-store').classList.toggle('on',m==='store');
+    document.getElementById('scope-platform').classList.toggle('on',m==='platform');
+    document.getElementById('brandsub').textContent = m==='store'?'painel de vendas':'console da plataforma';
+    document.getElementById('footname').textContent = m==='store'?'Loja Prime':'Eternity Admin';
+    document.getElementById('footrole').textContent = m==='store'?'plano Escala':'super-admin';
+    const scope=document.getElementById('scope-'+m);
+    scope.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+    scope.querySelector('.view').classList.add('on');
+    document.querySelectorAll('.nav').forEach(n=>n.classList.remove('on'));
+    const f=document.querySelector('.nav[data-s="'+m+'"]');f.classList.add('on');
+    const v=f.dataset.v;document.getElementById('vtitle').textContent=titles[v][0];document.getElementById('vcrumb').textContent=titles[v][1];
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  document.querySelectorAll('.nav').forEach(n=>{
+    n.addEventListener('click',()=>{
+      const v=n.dataset.v, s=n.dataset.s;
+      document.querySelectorAll('.nav[data-s="'+s+'"]').forEach(x=>x.classList.remove('on'));
+      n.classList.add('on');
+      const scope=document.getElementById('scope-'+s);
+      scope.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+      document.getElementById('v-'+v).classList.add('on');
+      document.getElementById('vtitle').textContent=titles[v][0];document.getElementById('vcrumb').textContent=titles[v][1];
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+  });
+  document.querySelectorAll('.toggle').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+  document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{
+    const sib=c.parentElement.querySelectorAll('.chip');
+    if(sib.length>4){c.classList.toggle('on')}
+    else{sib.forEach(x=>x.classList.remove('on'));c.classList.add('on')}
+  }));
+  function buildChart(data,days,cId,xId){
+    const max=Math.max(...data.map(d=>d.v));
+    const c=document.getElementById(cId),cx=document.getElementById(xId);
+    data.forEach((d,i)=>{const b=document.createElement('div');b.className='bar';b.style.height='6px';b.innerHTML='<span>'+d.label+'</span>';c.appendChild(b);setTimeout(()=>b.style.height=(d.v/max*100)+'%',55*i+100);const x=document.createElement('div');x.textContent=days[i];cx.appendChild(x);});
+  }
+  const days=['12','13','14','15','16','17','18','19','20','21','22','23','24','25'];
+  buildChart([2100,2800,2400,3100,2900,3600,4200,3800,3300,4100,3900,4600,4300,4890].map(v=>({v,label:'R$ '+v.toLocaleString('pt-BR')})),days,'chart','chartx');
+  buildChart([180,210,195,240,225,280,310,295,260,320,305,360,340,382].map(v=>({v,label:'R$ '+v+'K'})),days,'chart2','chartx2');
+
+  /* ===== EDITOR DE EMBED — PREVIEW AO VIVO ===== */
+  let embedColor = '#00e08a';
+  function pickColor(el){
+    document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));
+    el.classList.add('on');
+    embedColor = el.dataset.color;
+    renderEmbed();
+  }
+  // markdown bem básico: **negrito** e quebras de linha
+  function mdEscape(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function mdBold(s){return mdEscape(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');}
+  function renderEmbed(){
+    const g=id=>document.getElementById(id);
+    const bot=g('e-bot').value||'Bot';
+    g('p-name').textContent=bot;
+    g('p-ava').textContent=(bot.trim()[0]||'B').toUpperCase();
+    // autor
+    const author=g('e-author').value.trim();
+    g('p-author-wrap').style.display=author?'flex':'none';
+    g('p-author').textContent=author;
+    // título
+    const title=g('e-title').value.trim();
+    g('p-title').style.display=title?'block':'none';
+    g('p-title').textContent=title;
+    // descrição com markdown
+    g('p-desc').innerHTML=mdBold(g('e-desc').value);
+    // cor
+    g('p-embed').style.borderLeftColor=embedColor;
+    g('p-ava').style.background='linear-gradient(135deg,'+embedColor+',#00000033)';
+    g('p-btn').style.background=embedColor;
+    g('p-btn').style.color='#04130c';
+    // imagem grande
+    const img=g('e-img').value.trim();
+    const imgEl=g('p-img');
+    if(img){imgEl.src=img;imgEl.style.display='block';imgEl.onerror=()=>imgEl.style.display='none';}
+    else{imgEl.style.display='none';}
+    // thumb
+    const thumb=g('e-thumb').value.trim();
+    const thEl=g('p-thumb');
+    if(thumb){thEl.src=thumb;thEl.style.display='block';thEl.onerror=()=>thEl.style.display='none';}
+    else{thEl.style.display='none';}
+    // rodapé
+    const footer=g('e-footer').value.trim();
+    g('p-footer-wrap').style.display=footer?'flex':'none';
+    g('p-footer').textContent=footer;
+    // botão e select
+    g('p-btn').textContent=g('e-btn').value||'Comprar';
+    g('p-select').querySelector('span').textContent=g('e-select').value||'Selecionar';
+  }
+  renderEmbed();
+
+  /* ===== CONTADOR DE DIAS DO PLANO =====
+     No sistema real, este valor vem da API (view store_subscription -> days_left).
+     Aqui simulamos. Troque o número em updatePlanChip(...) para ver os estados. */
+  function updatePlanChip(diasRestantes){
+    const chip=document.getElementById('planChip');
+    const el=document.getElementById('planDays');
+    chip.classList.remove('soon','expired');
+    if(diasRestantes<=0){
+      chip.classList.add('expired');
+      chip.querySelector('span').innerHTML='Plano expirado · renovar';
+    } else if(diasRestantes<=5){
+      chip.classList.add('soon');
+      chip.querySelector('span').innerHTML='<b>'+diasRestantes+'</b> dias · expira em breve';
+    } else {
+      chip.querySelector('span').innerHTML='<b>'+diasRestantes+'</b> dias · Eternity Completo';
+    }
+  }
+  updatePlanChip(23);  // será substituído pelo valor real da API abaixo
+
+  // =====================================================================
+  //  NEXUS API — camada de conexão real com o backend
+  //  Tudo que o painel faz é controlado por aqui.
+  // =====================================================================
+  const API = 'https://eternity-api.squareweb.app';
+
+  // Auth
+  const EternityAuth = {
+    getToken: () => localStorage.getItem('eternity_token'),
+    setToken: t => localStorage.setItem('eternity_token', t),
+    clearToken: () => localStorage.removeItem('eternity_token'),
+    isLogged: () => !!localStorage.getItem('eternity_token'),
+    parseJWT: t => { try { return JSON.parse(atob(t.split('.')[1])); } catch { return null; } },
+  };
+
+  // Fetch com auth automática
+  async function eternityFetch(path, opts = {}) {
+    const token = EternityAuth.getToken();
+    const res = await fetch(API + path, {
+      ...opts,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(opts.headers || {}),
+      },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    if (res.status === 401) { EternityAuth.clearToken(); showLogin(); return null; }
+    return res.json();
+  }
+
+  // Estado global
+  let eternityState = { user: null, store: null, stores: [] };
+
+  // ── LOGIN ──────────────────────────────────────────────────────────
+  function showLogin() {
+    document.body.innerHTML = `
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)">
+        <div style="text-align:center;padding:48px;background:var(--panel);border-radius:24px;border:1px solid var(--line);max-width:400px;width:90%">
+          <div style="font-size:40px;margin-bottom:16px">⚡</div>
+          <h1 style="font-size:28px;font-weight:800;color:var(--txt);margin-bottom:8px">Nexus</h1>
+          <p style="color:var(--txt2);margin-bottom:32px">Plataforma de vendas no Discord</p>
+          <a href="${API}/api/auth/discord" style="display:block;padding:14px 24px;background:var(--acc);color:#04130c;font-weight:700;border-radius:12px;text-decoration:none;font-size:15px">
+            Entrar com Discord
+          </a>
+        </div>
+      </div>`;
+  }
+
+  // ── INICIALIZAÇÃO ─────────────────────────────────────────────────
+  async function eternityInit() {
+    // Checar se voltou do OAuth com token na URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+    if (tokenFromUrl) {
+      EternityAuth.setToken(tokenFromUrl);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    if (!EternityAuth.isLogged()) { showLogin(); return; }
+
+    // Carregar usuário e lojas
+    const me = await eternityFetch('/api/auth/me');
+    if (!me) return;
+
+    eternityState.user = me;
+    eternityState.stores = me.stores || [];
+
+    // Atualizar avatar/nome no topo
+    if (me.avatar_url) {
+      document.querySelectorAll('.user-avatar').forEach(el => {
+        el.src = me.avatar_url;
+        el.style.display = 'block';
+      });
+    }
+    document.querySelectorAll('.user-name').forEach(el => el.textContent = me.discord_tag);
+
+    // Se tem loja, carregar a primeira
+    if (eternityState.stores.length > 0) {
+      await eternityLoadStore(eternityState.stores[0].id);
+    } else {
+      // Sem loja → ir pro onboarding
+      switchView('onboarding');
+    }
+  }
+
+  // ── CARREGAR LOJA ─────────────────────────────────────────────────
+  async function eternityLoadStore(storeId) {
+    const [store, stats] = await Promise.all([
+      eternityFetch(`/api/stores/${storeId}`),
+      eternityFetch(`/api/stores/${storeId}/stats`),
+    ]);
+    if (!store) return;
+
+    eternityState.store = store;
+
+    // Atualizar chip de plano
+    updatePlanChip(store.days_left ?? 30);
+
+    // Atualizar KPIs do dashboard
+    if (stats) {
+      const r = stats.revenue;
+      const kpis = document.querySelectorAll('.kpi .val');
+      if (kpis[0]) kpis[0].textContent = `R$ ${Number(r.total||0).toFixed(2).replace('.',',')}`;
+      if (kpis[1]) kpis[1].textContent = r.delivered || '0';
+      if (kpis[2]) kpis[2].textContent = r.pending || '0';
+
+      // Vendas recentes
+      eternityRenderRecentSales(stats.recentSales || []);
+    }
+
+    // Nome da loja no topo
+    document.querySelectorAll('.store-name').forEach(el => el.textContent = store.name);
+  }
+
+  // ── VENDAS RECENTES ───────────────────────────────────────────────
+  function eternityRenderRecentSales(sales) {
+    const el = document.querySelector('.sales-table tbody, #recent-sales-list');
+    if (!el || !sales.length) return;
+    el.innerHTML = sales.map(s => `
+      <tr>
+        <td>#${s.public_ref}</td>
+        <td>${s.buyer_tag || s.buyer_discord_id}</td>
+        <td>${s.product_name || '—'}</td>
+        <td>R$ ${Number(s.total).toFixed(2).replace('.',',')}</td>
+        <td><span class="tag t-${s.status==='delivered'?'auto':s.status==='pending'?'cyan':'bad'}">${s.status}</span></td>
+      </tr>
+    `).join('');
+  }
+
+  // ── PUBLICAR PAINEL NO DISCORD ────────────────────────────────────
+  window.eternityPublishPanel = async function() {
+    if (!eternityState.store) return;
+    const res = await eternityFetch(`/api/stores/${eternityState.store.id}/publish`, { method: 'POST' });
+    if (res?.ok) alert('✅ Painel publicado no Discord com sucesso!');
+    else alert('❌ ' + (res?.error || 'Erro ao publicar'));
+  };
+
+  // ── LOGOUT ────────────────────────────────────────────────────────
+  window.eternityLogout = function() {
+    EternityAuth.clearToken();
+    showLogin();
+  };
+
+  // Iniciar
+  eternityInit();
+</script>
+</body>
+</html>
