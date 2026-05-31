@@ -874,21 +874,19 @@ Entrega **automática** após o pagamento via PIX. Qualquer dúvida, abra um tic
   updatePlanChip(23);  // será substituído pelo valor real da API abaixo
 
   // =====================================================================
-  //  NEXUS API — camada de conexão real com o backend
-  //  Tudo que o painel faz é controlado por aqui.
+  //  ETERNITY API — camada de dados real
+  //  Substitui todos os dados mockados por chamadas reais ao backend.
   // =====================================================================
   const API = 'https://eternity-api.squareweb.app';
 
-  // Auth
+  // ── AUTH ──────────────────────────────────────────────────────────────
   const EternityAuth = {
     getToken: () => localStorage.getItem('eternity_token'),
-    setToken: t => localStorage.setItem('eternity_token', t),
-    clearToken: () => localStorage.removeItem('eternity_token'),
-    isLogged: () => !!localStorage.getItem('eternity_token'),
-    parseJWT: t => { try { return JSON.parse(atob(t.split('.')[1])); } catch { return null; } },
+    setToken: t  => localStorage.setItem('eternity_token', t),
+    clearToken:  () => localStorage.removeItem('eternity_token'),
+    isLogged:    () => !!localStorage.getItem('eternity_token'),
   };
 
-  // Fetch com auth automática
   async function eternityFetch(path, opts = {}) {
     const token = EternityAuth.getToken();
     const res = await fetch(API + path, {
@@ -901,13 +899,13 @@ Entrega **automática** após o pagamento via PIX. Qualquer dúvida, abra um tic
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
     if (res.status === 401) { EternityAuth.clearToken(); showLogin(); return null; }
-    return res.json();
+    try { return await res.json(); } catch { return null; }
   }
 
   // Estado global
-  let eternityState = { user: null, store: null, stores: [] };
+  const S = { user: null, store: null, stores: [], channels: [], products: [] };
 
-  // ── LOGIN ──────────────────────────────────────────────────────────
+  // ── LOGIN ──────────────────────────────────────────────────────────────
   function showLogin() {
     document.body.innerHTML = `
       <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)">
@@ -922,103 +920,713 @@ Entrega **automática** após o pagamento via PIX. Qualquer dúvida, abra um tic
       </div>`;
   }
 
-  // ── INICIALIZAÇÃO ─────────────────────────────────────────────────
+  // ── HELPERS ────────────────────────────────────────────────────────────
+  function fmt(n) { return Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function timeAgo(d) {
+    const diff = Math.floor((Date.now()-new Date(d))/1000);
+    if(diff<60) return `há ${diff}s`; if(diff<3600) return `há ${Math.floor(diff/60)}min`;
+    if(diff<86400) return `há ${Math.floor(diff/3600)}h`; return `há ${Math.floor(diff/86400)}d`;
+  }
+  function statusTag(s) {
+    const map = { delivered:'t-ok', pending:'t-wait', refunded:'t-fail', cancelled:'t-fail' };
+    const label = { delivered:'entregue', pending:'aguardando', refunded:'estornado', cancelled:'cancelado' };
+    return `<span class="tag ${map[s]||''}"><span class="d"></span>${label[s]||s}</span>`;
+  }
+  function empty(msg='Nenhum dado ainda.') {
+    return `<tr><td colspan="99" style="text-align:center;color:var(--txt3);padding:32px">${msg}</td></tr>`;
+  }
+
+  // ── INICIALIZAÇÃO ──────────────────────────────────────────────────────
   async function eternityInit() {
-    // Checar se voltou do OAuth com token na URL
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('token');
     if (tokenFromUrl) {
       EternityAuth.setToken(tokenFromUrl);
       window.history.replaceState({}, '', window.location.pathname);
     }
-
     if (!EternityAuth.isLogged()) { showLogin(); return; }
 
-    // Carregar usuário e lojas
     const me = await eternityFetch('/api/auth/me');
     if (!me) return;
+    S.user = me;
+    S.stores = me.stores || [];
 
-    eternityState.user = me;
-    eternityState.stores = me.stores || [];
-
-    // Atualizar avatar/nome no topo
     if (me.avatar_url) {
-      document.querySelectorAll('.user-avatar').forEach(el => {
-        el.src = me.avatar_url;
-        el.style.display = 'block';
-      });
+      document.querySelectorAll('.user-avatar').forEach(el => { el.src = me.avatar_url; el.style.display='block'; });
     }
-    document.querySelectorAll('.user-name').forEach(el => el.textContent = me.discord_tag);
+    document.querySelectorAll('.user-name').forEach(el => el.textContent = me.discord_tag || 'usuário');
 
-    // Se tem loja, carregar a primeira
-    if (eternityState.stores.length > 0) {
-      await eternityLoadStore(eternityState.stores[0].id);
+    if (S.stores.length > 0) {
+      await loadStore(S.stores[0].id);
     } else {
-      // Sem loja → ir pro onboarding
       switchView('onboarding');
     }
   }
 
-  // ── CARREGAR LOJA ─────────────────────────────────────────────────
-  async function eternityLoadStore(storeId) {
+  // ── CARREGAR LOJA ──────────────────────────────────────────────────────
+  async function loadStore(storeId) {
     const [store, stats] = await Promise.all([
       eternityFetch(`/api/stores/${storeId}`),
       eternityFetch(`/api/stores/${storeId}/stats`),
     ]);
     if (!store) return;
+    S.store = store;
 
-    eternityState.store = store;
-
-    // Atualizar chip de plano
+    // Chip de plano
     updatePlanChip(store.days_left ?? 30);
 
-    // Atualizar KPIs do dashboard
-    if (stats) {
-      const r = stats.revenue;
-      const kpis = document.querySelectorAll('.kpi .val');
-      if (kpis[0]) kpis[0].textContent = `R$ ${Number(r.total||0).toFixed(2).replace('.',',')}`;
-      if (kpis[1]) kpis[1].textContent = r.delivered || '0';
-      if (kpis[2]) kpis[2].textContent = r.pending || '0';
+    // Nome da loja
+    document.querySelectorAll('.store-name').forEach(el => el.textContent = store.name);
 
-      // Vendas recentes
-      eternityRenderRecentSales(stats.recentSales || []);
+    // Bot status
+    const pill = document.querySelector('.pill-live');
+    if (pill) {
+      const online = store.bot_status === 'online';
+      pill.innerHTML = `<span class="dot"></span> Bot ${online ? 'online' : 'offline'}`;
+      pill.style.color = online ? 'var(--acc)' : 'var(--bad)';
     }
 
-    // Nome da loja no topo
-    document.querySelectorAll('.store-name').forEach(el => el.textContent = store.name);
+    if (stats) renderDashboard(stats);
+
+    // Carregar canais do Discord se tiver guild_id
+    if (store.guild_id) await loadChannels(store.guild_id);
+
+    // Atualizar seletor de canal no editor de embed
+    updateChannelSelectors();
   }
 
-  // ── VENDAS RECENTES ───────────────────────────────────────────────
-  function eternityRenderRecentSales(sales) {
-    const el = document.querySelector('.sales-table tbody, #recent-sales-list');
-    if (!el || !sales.length) return;
-    el.innerHTML = sales.map(s => `
-      <tr>
-        <td>#${s.public_ref}</td>
-        <td>${s.buyer_tag || s.buyer_discord_id}</td>
-        <td>${s.product_name || '—'}</td>
-        <td>R$ ${Number(s.total).toFixed(2).replace('.',',')}</td>
-        <td><span class="tag t-${s.status==='delivered'?'auto':s.status==='pending'?'cyan':'bad'}">${s.status}</span></td>
-      </tr>
-    `).join('');
+  // ── DASHBOARD ──────────────────────────────────────────────────────────
+  function renderDashboard(stats) {
+    const r = stats.revenue || {};
+
+    // KPIs
+    const kpis = document.querySelectorAll('#v-dash .kpi .val');
+    if (kpis[0]) kpis[0].textContent = `R$ ${fmt(r.total)}`;
+    if (kpis[1]) kpis[1].textContent = r.delivered || '0';
+    if (kpis[2]) kpis[2].textContent = r.pending || '0';
+    const ticket = r.delivered > 0 ? (r.total / r.delivered) : 0;
+    if (kpis[3]) kpis[3].textContent = `R$ ${fmt(ticket)}`;
+
+    // Tabela de vendas recentes
+    const tbody = document.querySelector('#v-dash table tbody');
+    if (tbody && stats.recentSales?.length) {
+      tbody.innerHTML = stats.recentSales.map(s => `
+        <tr>
+          <td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='7.5' cy='15.5' r='4.5'/><path d='m10.5 12.5 8-8'/></svg></div><div>${s.product_name||'Produto'}<small>${s.emoji||''}</small></div></div></td>
+          <td class="mono">${s.buyer_tag||s.buyer_discord_id||'—'}</td>
+          <td class="mono">R$ ${fmt(s.unit_price||s.total)}</td>
+          <td><span class="tag t-auto">PIX</span></td>
+          <td>${statusTag(s.status)}</td>
+          <td class="mono" style="color:var(--txt3)">${timeAgo(s.created_at)}</td>
+        </tr>`).join('');
+    } else if (tbody) {
+      tbody.innerHTML = empty('Sem vendas ainda. Quando o bot processar a primeira venda, ela aparece aqui.');
+    }
+
+    // Gráfico de barras
+    if (stats.salesByDay?.length) {
+      buildChart(
+        stats.salesByDay.map(d => ({ v: Number(d.revenue), label: `R$ ${fmt(d.revenue)}` })),
+        stats.salesByDay.map(d => new Date(d.day).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}).slice(0,5)),
+        'chart', 'chartx'
+      );
+    }
   }
 
-  // ── PUBLICAR PAINEL NO DISCORD ────────────────────────────────────
-  window.eternityPublishPanel = async function() {
-    if (!eternityState.store) return;
-    const res = await eternityFetch(`/api/stores/${eternityState.store.id}/publish`, { method: 'POST' });
-    if (res?.ok) alert('✅ Painel publicado no Discord com sucesso!');
-    else alert('❌ ' + (res?.error || 'Erro ao publicar'));
+  // ── PRODUTOS ──────────────────────────────────────────────────────────
+  async function loadProducts() {
+    if (!S.store) return;
+    const prods = await eternityFetch(`/api/products?store_id=${S.store.id}`);
+    if (!prods) return;
+    S.products = prods;
+
+    const grid = document.querySelector('#v-prods .pgrid');
+    const subtitle = document.querySelector('#v-prods .card-head .sub');
+    if (subtitle) subtitle.textContent = `${prods.length} produto(s) cadastrado(s)`;
+
+    if (!grid) return;
+
+    if (!prods.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--txt3)">Nenhum produto ainda. Clique em "+ Novo produto" para começar.</div>`;
+      return;
+    }
+
+    grid.innerHTML = prods.map(p => {
+      const stock = Number(p.stock_count||0);
+      const maxStock = 200;
+      const stockPct = p.delivery==='role' ? 100 : Math.min(100, (stock/maxStock)*100);
+      const stockColor = stock===0 ? 'var(--bad)' : stock<10 ? 'var(--warn)' : 'var(--acc)';
+      const price = p.variants?.[0]?.price || 0;
+      return `
+        <div class="pcard" onclick="openProductEditor('${p.id}')">
+          <div class="top"><div class="ic"><span style="font-size:20px">${p.emoji||'📦'}</span></div>
+            <div><h4>${p.name}</h4><span class="tag ${p.active?'t-ok':'t-fail'}">${p.delivery||'auto'} · ${p.stock_kind||'line'}</span></div>
+          </div>
+          <div class="price">R$ ${fmt(price)}</div>
+          <div class="stockbar"><i style="width:${stockPct}%"></i></div>
+          <div class="meta">
+            <span style="color:${stockColor}">${p.delivery==='role'?'ilimitado':stock+' un.'}</span>
+            <span style="color:var(--acc)">editar</span>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Também atualizar o select de produtos no editor de embed
+    updateEmbedProductList();
+  }
+
+  // ── MODAL CRIAR/EDITAR PRODUTO ────────────────────────────────────────
+  window.openProductEditor = function(productId) {
+    const prod = productId ? S.products.find(p => p.id === productId) : null;
+    const channels = S.channels.length
+      ? `<select id="pe-channel"><option value="">— Selecionar canal —</option>${S.channels.map(c=>`<option value="${c.id}" ${S.store?.sales_channel_id==c.id?'selected':''}>#${c.name}</option>`).join('')}</select>`
+      : `<input id="pe-channel" placeholder="ID do canal (ex: 123456789)" value="${S.store?.sales_channel_id||''}">`;
+
+    const modal = document.createElement('div');
+    modal.id = 'prod-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:#0008;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML = `
+      <div style="background:var(--panel);border-radius:20px;border:1px solid var(--line);width:100%;max-width:900px;max-height:90vh;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:0">
+        <!-- EDITOR -->
+        <div style="padding:28px;border-right:1px solid var(--line)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="font-size:16px">${prod?'Editar produto':'Novo produto'}</h3>
+            <button onclick="document.getElementById('prod-modal').remove()" style="background:none;border:none;color:var(--txt2);cursor:pointer;font-size:20px">✕</button>
+          </div>
+
+          <div class="field"><label>Emoji</label><input id="pe-emoji" value="${prod?.emoji||'📦'}" maxlength="2" style="width:70px" oninput="updateProdPreview()"></div>
+          <div class="field"><label>Nome do produto</label><input id="pe-name" placeholder="Ex: Nitro 1 mês" value="${prod?.name||''}" oninput="updateProdPreview()"></div>
+          <div class="field"><label>Preço (R$)</label><input id="pe-price" type="number" step="0.01" placeholder="0.00" value="${prod?.variants?.[0]?.price||''}" oninput="updateProdPreview()"></div>
+          <div class="field"><label>Descrição</label><textarea id="pe-desc" rows="3" placeholder="Suporta **negrito** e quebras de linha" oninput="updateProdPreview()">${prod?.description||''}</textarea></div>
+          <div class="field"><label>Tipo de entrega</label>
+            <select id="pe-delivery" onchange="updateProdPreview()">
+              <option value="key" ${prod?.delivery==='key'?'selected':''}>🔑 Chave/Key automático</option>
+              <option value="file" ${prod?.delivery==='file'?'selected':''}>📁 Arquivo automático</option>
+              <option value="role" ${prod?.delivery==='role'?'selected':''}>⭐ Cargo automático</option>
+              <option value="manual" ${prod?.delivery==='manual'?'selected':''}>👤 Manual (staff entrega)</option>
+            </select>
+          </div>
+          <div class="field"><label>Canal de publicação</label>${channels}<div class="hint">Canal onde o bot vai postar o embed deste produto</div></div>
+          <div style="display:flex;gap:10px;margin-top:20px">
+            ${prod ? `<button class="btn ghost" onclick="deleteProduct('${prod.id}')">Excluir</button>` : ''}
+            <button class="btn" style="flex:1" onclick="${prod?`saveProduct('${prod.id}')`:'createProduct()'}">
+              ${prod ? 'Salvar alterações' : 'Criar produto'}
+            </button>
+          </div>
+          ${prod ? `<button class="btn" style="width:100%;margin-top:10px;background:var(--violet)" onclick="publishProductEmbed('${prod.id}')">⚡ Publicar no Discord agora</button>` : ''}
+        </div>
+
+        <!-- PREVIEW DISCORD AO VIVO -->
+        <div style="padding:28px;background:var(--bg)">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:7px">
+            👁 Preview ao vivo — como vai aparecer no Discord
+          </div>
+          <div class="dc">
+            <div class="dc-msg">
+              <div class="dc-ava" id="pp-ava">${S.store?.bot_name?.[0]||'L'}</div>
+              <div class="dc-body">
+                <div class="dc-head"><span class="dc-name" id="pp-name">${S.store?.bot_name||'Eternity Bot'}</span><span class="dc-bot">BOT</span><span class="dc-time">hoje</span></div>
+                <div class="dc-embed" id="pp-embed" style="border-left-color:${S.store?.brand_color||'#00e08a'}">
+                  <div class="e-main">
+                    <div class="dc-author"><span id="pp-author">📦 Produto</span></div>
+                    <div class="dc-title" id="pp-title">${prod?.name||'Nome do produto'}</div>
+                    <div class="dc-desc" id="pp-desc">${prod?.description||'Descrição aparece aqui...'}</div>
+                    <div style="margin-top:10px;display:flex;gap:16px">
+                      <div><div style="color:var(--dc-muted);font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:2px">💰 Preço</div><div id="pp-price" style="color:var(--dc-text);font-weight:700">R$ ${fmt(prod?.variants?.[0]?.price||0)}</div></div>
+                      <div><div style="color:var(--dc-muted);font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:2px">📦 Entrega</div><div id="pp-delivery" style="color:var(--dc-text)">${prod?.delivery||'automática'}</div></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="dc-btns"><button class="dc-btn success">🛒 Comprar agora</button><button class="dc-btn">ℹ️ Detalhes</button></div>
+              </div>
+            </div>
+          </div>
+          <div class="note" style="margin-top:14px;font-size:12px">O preview atualiza em tempo real conforme você digita. Clique em "Publicar no Discord" para enviar ao canal escolhido.</div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
   };
 
-  // ── LOGOUT ────────────────────────────────────────────────────────
+  window.updateProdPreview = function() {
+    const name = document.getElementById('pe-name')?.value || 'Nome do produto';
+    const emoji = document.getElementById('pe-emoji')?.value || '📦';
+    const price = document.getElementById('pe-price')?.value || '0';
+    const desc = document.getElementById('pe-desc')?.value || '';
+    const delivery = document.getElementById('pe-delivery')?.value || 'key';
+    const deliveryLabel = { key:'🔑 Chave automática', file:'📁 Arquivo automático', role:'⭐ Cargo automático', manual:'👤 Manual' };
+    if(document.getElementById('pp-title')) document.getElementById('pp-title').textContent = `${emoji} ${name}`;
+    if(document.getElementById('pp-author')) document.getElementById('pp-author').textContent = `${emoji} ${name}`;
+    if(document.getElementById('pp-desc')) document.getElementById('pp-desc').innerHTML = mdBold(desc);
+    if(document.getElementById('pp-price')) document.getElementById('pp-price').textContent = `R$ ${fmt(price)}`;
+    if(document.getElementById('pp-delivery')) document.getElementById('pp-delivery').textContent = deliveryLabel[delivery]||delivery;
+  };
+
+  window.createProduct = async function() {
+    const store_id = S.store?.id;
+    const name = document.getElementById('pe-name')?.value?.trim();
+    const price = document.getElementById('pe-price')?.value;
+    const desc = document.getElementById('pe-desc')?.value;
+    const emoji = document.getElementById('pe-emoji')?.value;
+    const delivery = document.getElementById('pe-delivery')?.value;
+    const channelEl = document.getElementById('pe-channel');
+    const channelId = channelEl?.value;
+
+    if (!name) { alert('Digite o nome do produto'); return; }
+
+    const btn = document.querySelector('#prod-modal .btn');
+    if (btn) { btn.textContent = 'Criando...'; btn.disabled = true; }
+
+    // Salvar canal na loja se informado
+    if (channelId && channelId !== S.store?.sales_channel_id) {
+      await eternityFetch(`/api/stores/${store_id}`, { method:'PATCH', body:{ sales_channel_id: channelId } });
+      S.store.sales_channel_id = channelId;
+    }
+
+    const res = await eternityFetch('/api/products', {
+      method: 'POST',
+      body: { store_id, name, description: desc, emoji, delivery, stock_kind:'line', price: Number(price||0) }
+    });
+
+    if (res?.id) {
+      document.getElementById('prod-modal')?.remove();
+      await loadProducts();
+      showToast('✅ Produto criado com sucesso!');
+    } else {
+      showToast('❌ Erro ao criar produto', true);
+      if (btn) { btn.textContent = 'Criar produto'; btn.disabled = false; }
+    }
+  };
+
+  window.saveProduct = async function(id) {
+    const name = document.getElementById('pe-name')?.value?.trim();
+    const desc = document.getElementById('pe-desc')?.value;
+    const emoji = document.getElementById('pe-emoji')?.value;
+    const channelEl = document.getElementById('pe-channel');
+    const channelId = channelEl?.value;
+
+    if (channelId && channelId !== S.store?.sales_channel_id) {
+      await eternityFetch(`/api/stores/${S.store.id}`, { method:'PATCH', body:{ sales_channel_id: channelId } });
+      S.store.sales_channel_id = channelId;
+    }
+
+    await eternityFetch(`/api/products/${id}`, { method:'PATCH', body:{ name, description:desc, emoji } });
+    document.getElementById('prod-modal')?.remove();
+    await loadProducts();
+    showToast('✅ Produto atualizado!');
+  };
+
+  window.deleteProduct = async function(id) {
+    if (!confirm('Excluir produto? O estoque associado também será removido.')) return;
+    await eternityFetch(`/api/products/${id}`, { method:'DELETE' });
+    document.getElementById('prod-modal')?.remove();
+    await loadProducts();
+    showToast('🗑️ Produto excluído.');
+  };
+
+  window.publishProductEmbed = async function(productId) {
+    const channelId = document.getElementById('pe-channel')?.value || S.store?.sales_channel_id;
+    if (!channelId) { alert('Selecione um canal primeiro!'); return; }
+    const res = await eternityFetch(`/api/stores/${S.store.id}/publish`, { method:'POST', body:{ product_id: productId, channel_id: channelId } });
+    showToast(res?.ok ? '✅ Publicado no Discord!' : `❌ ${res?.error||'Erro ao publicar'}`);
+  };
+
+  // ── ESTOQUE ────────────────────────────────────────────────────────────
+  async function loadStock() {
+    if (!S.store) return;
+    const items = await eternityFetch(`/api/stock?store_id=${S.store.id}`);
+    if (!items) return;
+
+    // KPIs
+    const available = items.filter(i=>i.status==='available').length;
+    const lowAlert = S.products.filter(p=>Number(p.stock_count||0)<5 && p.delivery!=='role').length;
+    const outOf = S.products.filter(p=>Number(p.stock_count||0)===0 && p.delivery!=='role').length;
+    const kpis = document.querySelectorAll('#v-stock .kpi .val');
+    if (kpis[0]) kpis[0].textContent = available;
+    if (kpis[1]) { kpis[1].textContent = lowAlert; kpis[1].style.color = lowAlert>0?'var(--warn)':'var(--acc)'; }
+    if (kpis[2]) { kpis[2].textContent = outOf; kpis[2].style.color = outOf>0?'var(--bad)':'var(--acc)'; }
+
+    // Tabela de inventário
+    const tbody = document.querySelector('#v-stock table tbody');
+    if (!tbody) return;
+    if (!S.products.length) { tbody.innerHTML = empty('Crie produtos primeiro.'); return; }
+
+    tbody.innerHTML = S.products.map(p => {
+      const stock = Number(p.stock_count||0);
+      const isGhost = p.delivery === 'role';
+      const status = isGhost ? `<span class="tag t-vio"><span class="d"></span>ok</span>`
+        : stock===0 ? `<span class="tag t-fail"><span class="d"></span>esgotado</span>`
+        : stock<10  ? `<span class="tag t-wait"><span class="d"></span>repor</span>`
+        : `<span class="tag t-ok"><span class="d"></span>ok</span>`;
+      return `<tr>
+        <td>${p.emoji||'📦'} ${p.name}</td>
+        <td><span class="tag t-cyan">${p.stock_kind||'linha'}</span></td>
+        <td class="mono" style="color:${stock===0&&!isGhost?'var(--bad)':''}">${isGhost?'∞':stock}</td>
+        <td class="mono">${isGhost?'0':'—'}</td>
+        <td><button class="btn ghost sm" onclick="openAddStock('${p.id}','${p.name}')">+ Repor</button></td>
+        <td>${status}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.openAddStock = function(productId, productName) {
+    const modal = document.createElement('div');
+    modal.id = 'stock-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:#0008;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML = `
+      <div style="background:var(--panel);border-radius:20px;border:1px solid var(--line);width:100%;max-width:500px;padding:28px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <h3>+ Repor estoque · ${productName}</h3>
+          <button onclick="document.getElementById('stock-modal').remove()" style="background:none;border:none;color:var(--txt2);cursor:pointer;font-size:20px">✕</button>
+        </div>
+        <div class="field"><label>Chaves / linhas (uma por linha)</label>
+          <textarea id="stock-keys" rows="8" placeholder="chave1\nchave2\narquivo3..." style="font-family:monospace;font-size:12px"></textarea>
+          <div class="hint" id="stock-count">0 itens</div>
+        </div>
+        <button class="btn" style="width:100%" onclick="submitStock('${productId}')">Adicionar ao estoque</button>
+      </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('stock-keys')?.addEventListener('input', e => {
+      const n = e.target.value.split('\n').filter(l=>l.trim()).length;
+      document.getElementById('stock-count').textContent = `${n} item(s)`;
+    });
+  };
+
+  window.submitStock = async function(productId) {
+    const keys = document.getElementById('stock-keys')?.value;
+    if (!keys?.trim()) { alert('Cole as chaves acima'); return; }
+    const res = await eternityFetch('/api/stock/bulk', {
+      method: 'POST',
+      body: { store_id: S.store.id, product_id: productId, keys }
+    });
+    if (res?.inserted) {
+      document.getElementById('stock-modal')?.remove();
+      await loadProducts();
+      await loadStock();
+      showToast(`✅ ${res.inserted} item(s) adicionado(s) ao estoque!`);
+    } else {
+      showToast('❌ Erro ao adicionar estoque', true);
+    }
+  };
+
+  // ── VENDAS ──────────────────────────────────────────────────────────────
+  async function loadSales(statusFilter) {
+    if (!S.store) return;
+    let url = `/api/sales?store_id=${S.store.id}&limit=100`;
+    if (statusFilter && statusFilter !== 'todas') url += `&status=${statusFilter}`;
+    const sales = await eternityFetch(url);
+    if (!sales) return;
+
+    // KPIs
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const hojeVendas = sales.filter(s => new Date(s.created_at) >= hoje);
+    const receita = hojeVendas.reduce((a,s)=>a+Number(s.total||0),0);
+    const pendentes = sales.filter(s=>s.status==='pending').length;
+    const kpis = document.querySelectorAll('#v-sales .kpi .val');
+    if (kpis[0]) kpis[0].textContent = `R$ ${fmt(receita)}`;
+    if (kpis[1]) { kpis[1].textContent = pendentes; kpis[1].style.color = pendentes>0?'var(--warn)':'var(--acc)'; }
+
+    const tbody = document.querySelector('#v-sales table tbody');
+    if (!tbody) return;
+
+    if (!sales.length) { tbody.innerHTML = empty('Nenhuma venda ainda.'); return; }
+
+    tbody.innerHTML = sales.map(s => `
+      <tr>
+        <td class="mono" style="color:var(--txt3)">#${s.public_ref||s.id?.slice(0,6)}</td>
+        <td>${s.emoji||''} ${s.product_name||'—'}</td>
+        <td class="mono">${s.buyer_tag||s.buyer_discord_id||'—'}</td>
+        <td class="mono">R$ ${fmt(s.total)}</td>
+        <td><span class="tag t-auto">${s.payment_method||'PIX'}</span></td>
+        <td>${statusTag(s.status)}</td>
+      </tr>`).join('');
+  }
+
+  // ── CUPONS ──────────────────────────────────────────────────────────────
+  async function loadCoupons() {
+    if (!S.store) return;
+    const coupons = await eternityFetch(`/api/coupons?store_id=${S.store.id}`);
+    if (!coupons) return;
+
+    const tbody = document.querySelector('#v-coupons table tbody');
+    if (!tbody) return;
+
+    if (!coupons.length) { tbody.innerHTML = empty('Nenhum cupom criado.'); return; }
+
+    tbody.innerHTML = coupons.map(c => `
+      <tr>
+        <td class="mono">${c.code}</td>
+        <td>${c.kind==='percent'?`${c.amount}%`:`R$ ${fmt(c.amount)}`}</td>
+        <td class="mono">${c.used_count||0} / ${c.max_uses||'∞'}</td>
+        <td>${c.active ? `<span class="tag t-ok"><span class="d"></span>ativo</span>` : `<span class="tag t-fail"><span class="d"></span>inativo</span>`}</td>
+        <td><button class="btn ghost sm" onclick="toggleCoupon('${c.id}',${!c.active})">${c.active?'Desativar':'Ativar'}</button></td>
+      </tr>`).join('');
+  }
+
+  window.openCreateCoupon = function() {
+    const modal = document.createElement('div');
+    modal.id = 'coupon-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:#0008;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML = `
+      <div style="background:var(--panel);border-radius:20px;border:1px solid var(--line);width:100%;max-width:440px;padding:28px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <h3>+ Novo cupom</h3>
+          <button onclick="document.getElementById('coupon-modal').remove()" style="background:none;border:none;color:var(--txt2);cursor:pointer;font-size:20px">✕</button>
+        </div>
+        <div class="field"><label>Código</label><input id="cp-code" placeholder="EX: PROMO10" style="text-transform:uppercase"></div>
+        <div class="field"><label>Tipo</label>
+          <select id="cp-kind"><option value="percent">Percentual (%)</option><option value="fixed">Valor fixo (R$)</option></select></div>
+        <div class="field"><label>Valor</label><input id="cp-amount" type="number" placeholder="10"></div>
+        <div class="field"><label>Usos máximos (vazio = ilimitado)</label><input id="cp-maxuses" type="number" placeholder="∞"></div>
+        <button class="btn" style="width:100%;margin-top:10px" onclick="submitCoupon()">Criar cupom</button>
+      </div>`;
+    document.body.appendChild(modal);
+  };
+
+  window.submitCoupon = async function() {
+    const code = document.getElementById('cp-code')?.value?.toUpperCase().trim();
+    const kind = document.getElementById('cp-kind')?.value;
+    const amount = document.getElementById('cp-amount')?.value;
+    const maxUses = document.getElementById('cp-maxuses')?.value;
+    if (!code||!amount) { alert('Preencha código e valor'); return; }
+    const res = await eternityFetch('/api/coupons', {
+      method:'POST',
+      body: { store_id:S.store.id, code, kind, amount:Number(amount), max_uses:maxUses||null }
+    });
+    if (res?.id) {
+      document.getElementById('coupon-modal')?.remove();
+      await loadCoupons();
+      showToast('✅ Cupom criado!');
+    }
+  };
+
+  window.toggleCoupon = async function(id, active) {
+    await eternityFetch(`/api/coupons/${id}`, { method:'PATCH', body:{ active } });
+    await loadCoupons();
+  };
+
+  // ── TICKETS ──────────────────────────────────────────────────────────────
+  async function loadTickets() {
+    if (!S.store) return;
+    const tickets = await eternityFetch(`/api/tickets?store_id=${S.store.id}`);
+    if (!tickets) return;
+
+    const open = tickets.filter(t=>t.status==='open').length;
+    const urgent = tickets.filter(t=>t.status==='open'&&t.priority==='urgent').length;
+    const kpis = document.querySelectorAll('#v-tickets .kpi .val');
+    if (kpis[0]) { kpis[0].textContent = open; }
+
+    const container = document.querySelector('#v-tickets .flow');
+    if (!container) return;
+
+    if (!tickets.length) { container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--txt3)">Nenhum ticket. Ótimo!</div>`; return; }
+
+    container.innerHTML = tickets.slice(0,10).map(t => {
+      const isUrgent = t.status==='open' && t.priority==='urgent';
+      const isClosed = t.status==='closed';
+      const style = isUrgent ? 'background:var(--bad-dim);color:var(--bad);border-color:#3a1d24' : isClosed ? 'background:var(--line);color:var(--txt3);border:none' : '';
+      const tagClass = isUrgent ? 't-fail' : isClosed ? '' : 't-wait';
+      const tagLabel = isUrgent ? 'urgente' : isClosed ? 'fechado' : 'aberto';
+      return `
+        <div class="flow-step" style="border-top:1px solid var(--line);cursor:pointer" onclick="viewTicket('${t.id}')">
+          <div class="n" style="${style}">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg></div>
+          <div><h5>${t.subject||'Ticket #'+t.id?.slice(0,6)}</h5><p>${t.buyer_tag||t.buyer_discord_id||'—'} · ${timeAgo(t.created_at)} · ${t.message_count||0} msgs</p></div>
+          <span class="tag ${tagClass}"><span class="d"></span>${tagLabel}</span>
+        </div>`;
+    }).join('');
+  }
+
+  window.viewTicket = async function(ticketId) {
+    const msgs = await eternityFetch(`/api/tickets/${ticketId}/messages`);
+    const modal = document.createElement('div');
+    modal.id = 'ticket-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:#0008;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML = `
+      <div style="background:var(--panel);border-radius:20px;border:1px solid var(--line);width:100%;max-width:600px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+          <h3>Ticket #${ticketId?.slice(0,8)}</h3>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn ghost sm" onclick="closeTicket('${ticketId}')">Fechar ticket</button>
+            <button onclick="document.getElementById('ticket-modal').remove()" style="background:none;border:none;color:var(--txt2);cursor:pointer;font-size:20px">✕</button>
+          </div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px">
+          ${(msgs||[]).map(m=>`
+            <div class="bubble ${m.sender_type==='staff'?'ai':'user'}">
+              <small>${m.sender_tag||m.sender_type}</small>
+              ${m.content}
+            </div>`).join('') || '<div style="text-align:center;color:var(--txt3);padding:20px">Sem mensagens ainda.</div>'}
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  };
+
+  window.closeTicket = async function(id) {
+    await eternityFetch(`/api/tickets/${id}`, { method:'PATCH', body:{ status:'closed' } });
+    document.getElementById('ticket-modal')?.remove();
+    await loadTickets();
+    showToast('✅ Ticket fechado.');
+  };
+
+  // ── CANAIS DO DISCORD ──────────────────────────────────────────────────
+  async function loadChannels(guildId) {
+    // Buscar canais via bot (rota do backend que consulta a API do Discord)
+    try {
+      const res = await eternityFetch(`/api/stores/${S.store.id}/channels`);
+      S.channels = res?.channels || [];
+    } catch { S.channels = []; }
+  }
+
+  function updateChannelSelectors() {
+    // Atualizar o seletor no editor de embed principal
+    const sel = document.getElementById('e-channel');
+    if (!sel) return;
+    sel.innerHTML = `<option value="">— Selecionar canal —</option>` +
+      S.channels.map(c=>`<option value="${c.id}" ${S.store?.sales_channel_id==c.id?'selected':''}>#${c.name}</option>`).join('');
+    if (!S.channels.length && S.store?.sales_channel_id) {
+      sel.innerHTML += `<option value="${S.store.sales_channel_id}" selected>#canal-${S.store.sales_channel_id}</option>`;
+    }
+  }
+
+  // ── EDITOR DE EMBED COM CANAL ──────────────────────────────────────────
+  function initEmbedEditor() {
+    // Adicionar seletor de canal ao editor de embed se não existir ainda
+    const embedCard = document.querySelector('#v-custom .card');
+    if (!embedCard) return;
+
+    // Verificar se já tem campo de canal
+    if (document.getElementById('e-channel')) return;
+
+    // Adicionar campo de canal depois do campo "botão de compra"
+    const btnField = document.getElementById('e-btn')?.closest('.field');
+    if (!btnField) return;
+
+    const channelField = document.createElement('div');
+    channelField.className = 'field';
+    channelField.innerHTML = `
+      <label>Canal onde publicar</label>
+      <select id="e-channel" onchange="saveChannelSelection()">
+        <option value="">— Selecionar canal —</option>
+      </select>
+      <div class="hint">O bot vai postar o embed neste canal ao clicar "Publicar"</div>`;
+    btnField.after(channelField);
+
+    // Botão publicar
+    const existingBtn = embedCard.querySelector('.btn[onclick*="publish"]');
+    if (!existingBtn) {
+      const pub = document.createElement('button');
+      pub.className = 'btn';
+      pub.style.cssText = 'width:100%;margin-top:16px';
+      pub.textContent = '⚡ Publicar painel no Discord';
+      pub.onclick = () => eternityPublishPanel();
+      embedCard.appendChild(pub);
+    }
+
+    updateChannelSelectors();
+  }
+
+  window.saveChannelSelection = async function() {
+    const channelId = document.getElementById('e-channel')?.value;
+    if (!channelId || !S.store) return;
+    await eternityFetch(`/api/stores/${S.store.id}`, { method:'PATCH', body:{ sales_channel_id: channelId } });
+    S.store.sales_channel_id = channelId;
+    showToast('✅ Canal salvo!');
+  };
+
+  // ── PUBLICAR PAINEL ────────────────────────────────────────────────────
+  window.eternityPublishPanel = async function() {
+    const channelId = document.getElementById('e-channel')?.value || S.store?.sales_channel_id;
+    if (!channelId) { alert('Selecione um canal primeiro!'); return; }
+    if (!S.store) return;
+
+    const botName  = document.getElementById('e-bot')?.value;
+    const author   = document.getElementById('e-author')?.value;
+    const title    = document.getElementById('e-title')?.value;
+    const desc     = document.getElementById('e-desc')?.value;
+    const footer   = document.getElementById('e-footer')?.value;
+    const btnText  = document.getElementById('e-btn')?.value;
+    const img      = document.getElementById('e-img')?.value;
+    const thumb    = document.getElementById('e-thumb')?.value;
+    const color    = document.querySelector('.swatch.on')?.dataset?.color;
+
+    const res = await eternityFetch(`/api/stores/${S.store.id}/publish`, {
+      method: 'POST',
+      body: { channel_id: channelId, embed:{ author, title, description:desc, footer, image:img, thumbnail:thumb, color }, btn_text: btnText }
+    });
+    showToast(res?.ok ? '✅ Painel publicado no Discord!' : `❌ ${res?.error||'Erro'}`);
+  };
+
+  // ── TOAST NOTIFICATION ─────────────────────────────────────────────────
+  function showToast(msg, isErr=false) {
+    const t = document.createElement('div');
+    t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:99999;background:${isErr?'var(--bad-dim)':'var(--acc-dim)'};border:1px solid ${isErr?'var(--bad)':'var(--acc)'};color:${isErr?'var(--bad)':'var(--acc)'};padding:12px 20px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:0 8px 24px #0004`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  // ── ATUALIZAR LISTA DE PRODUTOS NO EMBED ──────────────────────────────
+  function updateEmbedProductList() {
+    const sel = document.getElementById('p-select');
+    if (!sel || !S.products.length) return;
+    // já é só visual no preview — mantém como está
+  }
+
+  // ── HOOK nas abas — carrega dados ao mudar de view ─────────────────────
+  const _origSwitch = window.switchView;
+  window.switchView = async function(v) {
+    if (_origSwitch) _origSwitch(v);
+    if (!S.store) return;
+    if (v === 'prods' || v === 'products') await loadProducts();
+    else if (v === 'stock') { await loadProducts(); await loadStock(); }
+    else if (v === 'sales') await loadSales();
+    else if (v === 'coupons') await loadCoupons();
+    else if (v === 'tickets') await loadTickets();
+    else if (v === 'custom') initEmbedEditor();
+  };
+
+  // Também hookar os cliques na nav
+  document.querySelectorAll('.nav[data-v]').forEach(el => {
+    const orig = el.onclick;
+    el.addEventListener('click', async () => {
+      const v = el.dataset.v;
+      if (!S.store) return;
+      if (v === 'prods') await loadProducts();
+      else if (v === 'stock') { await loadProducts(); await loadStock(); }
+      else if (v === 'sales') await loadSales();
+      else if (v === 'coupons') await loadCoupons();
+      else if (v === 'tickets') await loadTickets();
+      else if (v === 'custom') setTimeout(initEmbedEditor, 100);
+    });
+  });
+
+  // Botões de filtro nas vendas
+  document.querySelectorAll('#v-sales .chip').forEach(chip => {
+    chip.addEventListener('click', async () => {
+      document.querySelectorAll('#v-sales .chip').forEach(c=>c.classList.remove('on'));
+      chip.classList.add('on');
+      await loadSales(chip.textContent.toLowerCase().replace('todas','').trim());
+    });
+  });
+
+  // Botão "+ Novo produto"
+  const newProdBtn = document.querySelector('#v-prods .btn');
+  if (newProdBtn) newProdBtn.addEventListener('click', ()=>openProductEditor(null));
+
+  // Botão "+ Cupom"
+  const newCouponBtn = document.querySelector('#v-coupons .btn.sm');
+  if (newCouponBtn) newCouponBtn.onclick = ()=>openCreateCoupon();
+
+  // ── LOGOUT ─────────────────────────────────────────────────────────────
   window.eternityLogout = function() {
     EternityAuth.clearToken();
     showLogin();
   };
 
-  // Iniciar
+  // ── INICIAR ─────────────────────────────────────────────────────────────
   eternityInit();
+
 </script>
 </body>
 </html>
