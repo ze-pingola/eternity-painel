@@ -287,21 +287,18 @@
     <div class="scope on" id="scope-store">
       <section class="view on" id="v-dash">
         <div class="kpis">
-          <div class="kpi"><div class="lbl">Faturamento (30d)</div><div class="val">R$ 48.920</div><div class="delta up">▲ 23,4%</div></div>
-          <div class="kpi"><div class="lbl">Vendas concluídas</div><div class="val">1.284</div><div class="delta up">▲ 18,1%</div></div>
-          <div class="kpi"><div class="lbl">Ticket médio</div><div class="val">R$ 38,10</div><div class="delta up">▲ 4,5%</div></div>
-          <div class="kpi"><div class="lbl">Conversão</div><div class="val">71,2%</div><div class="delta down">▼ 1,2%</div></div>
+          <div class="kpi"><div class="lbl">Faturamento (30d)</div><div class="val" id="kpi-revenue">R$ 0,00</div><div class="delta up" id="kpi-revenue-delta">—</div></div>
+          <div class="kpi"><div class="lbl">Vendas concluídas</div><div class="val" id="kpi-sales">0</div><div class="delta up" id="kpi-sales-delta">—</div></div>
+          <div class="kpi"><div class="lbl">Ticket médio</div><div class="val" id="kpi-ticket">R$ 0,00</div><div class="delta up">—</div></div>
+          <div class="kpi"><div class="lbl">Pendentes</div><div class="val" id="kpi-pending">0</div><div class="delta up">—</div></div>
         </div>
         <div class="grid2">
           <div class="card"><div class="card-head"><div><h3>Faturamento diário</h3><div class="sub">Últimos 14 dias · split via Mercado Pago</div></div><button class="btn ghost sm">Exportar</button></div><div class="chart" id="chart"></div><div class="chart-x" id="chartx"></div></div>
-          <div class="card"><h3>Métodos de pagamento</h3><div class="sub">Distribuição do mês</div><div class="donut-wrap"><div class="donut" style="background:conic-gradient(var(--acc) 0 52%, var(--acc2) 52% 78%, var(--warn) 78% 92%, var(--line2) 92% 100%)"><div class="center"><b>1.284</b><small>vendas</small></div></div><div class="legend"><div><i style="background:var(--acc)"></i> PIX auto <b>52%</b></div><div><i style="background:var(--acc2)"></i> PIX semi <b>26%</b></div><div><i style="background:var(--warn)"></i> Cartão <b>14%</b></div><div><i style="background:var(--line2)"></i> Cripto <b>8%</b></div></div></div></div>
+          <div class="card"><h3>Métodos de pagamento</h3><div class="sub">Distribuição do mês</div><div id="methods-wrap"><div style="text-align:center;padding:32px;color:var(--txt3);font-size:13px">Sem dados ainda.<br>Vendas aparecerão aqui.</div></div></div>
         </div>
         <div class="card"><div class="card-head"><div><h3>Vendas recentes</h3><div class="sub">Tempo real via webhook do bot</div></div><button class="btn ghost sm">Ver todas</button></div>
           <table><thead><tr><th>Produto</th><th>Comprador</th><th>Valor</th><th>Método</th><th>Status</th><th>Quando</th></tr></thead><tbody>
-            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='7.5' cy='15.5' r='4.5'/><path d='m10.5 12.5 8-8M16 6l3 3M20 2l2 2'/></svg></div><div>Nitro 1 mês<small>key #A8F2</small></div></div></td><td class="mono">@lucas_dev</td><td class="mono">R$ 24,90</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td><td class="mono" style="color:var(--txt3)">há 2 min</td></tr>
-            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='2' y='6' width='20' height='12' rx='4'/><path d='M7 11v2M6 12h2M15.5 11h.01M18 13h.01'/></svg></div><div>Conta Valorant<small>arquivo</small></div></div></td><td class="mono">@mari.gg</td><td class="mono">R$ 89,00</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td><td class="mono" style="color:var(--txt3)">há 11 min</td></tr>
-            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19l1-5.8-4.3-4.1 5.9-.9z'/></svg></div><div>Cargo VIP<small>autorole</small></div></div></td><td class="mono">@pedrooo</td><td class="mono">R$ 15,00</td><td><span class="tag t-wait">PIX semi</span></td><td><span class="tag t-wait"><span class="d"></span>aguardando</span></td><td class="mono" style="color:var(--txt3)">há 14 min</td></tr>
-            <tr><td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='6' cy='18' r='3'/><circle cx='18' cy='16' r='3'/><path d='M9 18V5l12-2v13'/></svg></div><div>Spotify<small>key #C1B9</small></div></div></td><td class="mono">@joao.silva</td><td class="mono">R$ 19,90</td><td><span class="tag t-auto">cartão</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td><td class="mono" style="color:var(--txt3)">há 22 min</td></tr>
+          <tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:24px">Carregando...</td></tr>
           </tbody></table>
         </div>
       </section>
@@ -315,12 +312,7 @@
         <div class="card"><div class="card-head"><div><h3>Todas as vendas</h3><div class="sub">Filtrável por status, método e produto</div></div><button class="btn">+ Venda manual</button></div>
           <div class="chips" style="margin-bottom:16px"><div class="chip on">Todas</div><div class="chip">Entregues</div><div class="chip">Aguardando</div><div class="chip">Estornadas</div><div class="chip">Carrinho</div></div>
           <table><thead><tr><th>ID</th><th>Produto</th><th>Comprador</th><th>Valor</th><th>Método</th><th>Status</th></tr></thead><tbody>
-            <tr><td class="mono" style="color:var(--txt3)">#10482</td><td>Nitro 1 mês</td><td class="mono">@lucas_dev</td><td class="mono">R$ 24,90</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td></tr>
-            <tr><td class="mono" style="color:var(--txt3)">#10481</td><td>Conta Valorant</td><td class="mono">@mari.gg</td><td class="mono">R$ 89,00</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td></tr>
-            <tr><td class="mono" style="color:var(--txt3)">#10480</td><td>Cargo VIP</td><td class="mono">@pedrooo</td><td class="mono">R$ 15,00</td><td><span class="tag t-wait">PIX semi</span></td><td><span class="tag t-wait"><span class="d"></span>aguardando</span></td></tr>
-            <tr><td class="mono" style="color:var(--txt3)">#10479</td><td>Spotify Premium</td><td class="mono">@joao.silva</td><td class="mono">R$ 19,90</td><td><span class="tag t-auto">cartão</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td></tr>
-            <tr><td class="mono" style="color:var(--txt3)">#10478</td><td>Robux 1k</td><td class="mono">@gamer_zr</td><td class="mono">R$ 42,00</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-ok"><span class="d"></span>entregue</span></td></tr>
-            <tr><td class="mono" style="color:var(--txt3)">#10477</td><td>Gift Card R$50</td><td class="mono">@anaclara</td><td class="mono">R$ 50,00</td><td><span class="tag t-auto">PIX auto</span></td><td><span class="tag t-fail"><span class="d"></span>estornado</span></td></tr>
+          <tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:24px">Carregando...</td></tr>
           </tbody></table>
         </div>
       </section>
@@ -346,119 +338,8 @@
         </div>
         <div class="card"><div class="card-head"><div><h3>Inventário</h3><div class="sub">Reserva atômica — nunca vende a mesma key duas vezes</div></div><button class="btn">+ Adicionar estoque</button></div>
           <table><thead><tr><th>Produto</th><th>Tipo</th><th>Disponível</th><th>Reservado</th><th>Vendido</th><th>Status</th></tr></thead><tbody>
-            <tr><td>Nitro 1 mês</td><td><span class="tag t-cyan">por linha</span></td><td class="mono">144</td><td class="mono">3</td><td class="mono">312</td><td><span class="tag t-ok"><span class="d"></span>ok</span></td></tr>
-            <tr><td>Conta Valorant</td><td><span class="tag t-cyan">arquivo</span></td><td class="mono" style="color:var(--warn)">12</td><td class="mono">1</td><td class="mono">88</td><td><span class="tag t-wait"><span class="d"></span>repor</span></td></tr>
-            <tr><td>Cargo VIP</td><td><span class="tag t-vio">ghost</span></td><td class="mono">∞</td><td class="mono">0</td><td class="mono">521</td><td><span class="tag t-ok"><span class="d"></span>ok</span></td></tr>
-            <tr><td>Robux 1k</td><td><span class="tag t-cyan">unitário</span></td><td class="mono" style="color:var(--warn)">30</td><td class="mono">2</td><td class="mono">96</td><td><span class="tag t-wait"><span class="d"></span>repor</span></td></tr>
-            <tr><td>Gift Card R$50</td><td><span class="tag t-cyan">por linha</span></td><td class="mono" style="color:var(--bad)">0</td><td class="mono">0</td><td class="mono">44</td><td><span class="tag t-fail"><span class="d"></span>esgotado</span></td></tr>
+          <tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:24px">Carregando...</td></tr>
           </tbody></table>
-        </div>
-      </section>
-      <section class="view" id="v-pay">
-        <div class="card"><h3>Métodos de pagamento</h3><div class="sub">Ative os que quiser. O cliente escolhe na hora da compra.</div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M13 2 3 14h9l-1 8 10-12h-9z'/></svg></div><div class="ct"><b>PIX automático — Mercado Pago</b><p>Split nativo · liquidação D+0 · webhook de confirmação</p></div><div class="toggle on"></div></div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M3 21h18M5 21V10M19 21V10M3 10l9-6 9 6M9 21v-6h6v6'/></svg></div><div class="ct"><b>PIX automático — Efí (Gerencianet)</b><p>Split nativo · certificado .p12 configurado</p></div><div class="toggle on"></div></div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M12 3 2 12l10 9 10-9z'/></svg></div><div class="ct"><b>PIX automático — Asaas / Pushin Pay</b><p>Provedores alternativos com split</p></div><div class="toggle"></div></div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1zM8 7h8M8 11h8M8 15h5'/></svg></div><div class="ct"><b>PIX semi-automático</b><p>Qualquer banco · cliente envia comprovante · equipe aprova</p></div><div class="toggle on"></div></div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/></svg></div><div class="ct"><b>Cartão de crédito</b><p>Via gateway · parcelamento opcional</p></div><div class="toggle on"></div></div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='M9.5 8h4a2 2 0 0 1 0 4h-4zm0 4h4.3a2 2 0 0 1 0 4H9.5zm0-4V6m0 12v-2m2-10v2m0 8v2'/></svg></div><div class="ct"><b>Criptomoedas</b><p>Bitcoin, Litecoin e outras · sem split</p></div><div class="toggle"></div></div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/><path d='m9 12 2 2 4-4'/></svg></div><div class="ct"><b>Anti-fraude &amp; bloqueio de contas</b><p>Detecta padrões suspeitos e bloqueia bancos/contas marcadas</p></div><div class="toggle on"></div></div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='2' y='6' width='20' height='12' rx='2'/><circle cx='12' cy='12' r='2.5'/><path d='M6 10v4M18 10v4'/></svg></div><div class="ct"><b>Cashback</b><p>Devolve % em saldo interno a cada compra</p></div><div class="toggle"></div></div>
-        </div>
-      </section>
-      <section class="view" id="v-wallet">
-        <div class="card" style="background:linear-gradient(135deg,#0d2b1e,#0a0b0f 70%); border:1px solid #1d3a2c; padding:28px; position:relative; overflow:hidden">
-          <div style="color:var(--acc); font-size:12px; font-weight:600; letter-spacing:.5px">RECEBIDO ESTE MÊS · DIRETO NA SUA CONTA</div>
-          <div style="font-size:42px; font-weight:800; letter-spacing:-1.5px; margin:8px 0 4px">R$ 47.038,52</div>
-          <div style="color:var(--txt2); font-size:13px; max-width:560px">Via split automático — o dinheiro nunca passa pela plataforma. A taxa de 2,9% já é descontada na origem.</div>
-          <div style="display:flex; gap:11px; margin-top:22px; flex-wrap:wrap"><button class="btn ghost">Ver extrato Mercado Pago</button><button class="btn ghost">Configurar conta de recebimento</button></div>
-        </div>
-        <div class="grid2">
-          <div class="card"><h3>Como o split funciona</h3><div class="sub">Por que você não tem "saldo a sacar" — e isso é bom</div>
-            <div class="split-viz"><div class="sv-total"><small>cliente paga</small><b>R$ 100</b></div><div class="arrow">→</div><div class="sv-seller"><small>vai pra você</small><b style="color:var(--acc)">R$ 97,10</b></div><div class="arrow">→</div><div class="sv-fee"><small>taxa</small><b style="color:var(--violet)">R$ 2,90</b></div></div>
-            <div class="note" style="margin-top:14px">O provedor divide o pagamento na hora: sua parte cai direto na <b>sua</b> conta. Ninguém custodia dinheiro de terceiro — sem risco de virar instituição de pagamento.</div>
-          </div>
-          <div class="card"><h3>Últimos recebimentos</h3><div class="sub">Liquidação D+0 no PIX</div>
-            <table><thead><tr><th>Venda</th><th>Bruto</th><th>Você recebeu</th></tr></thead><tbody>
-              <tr><td>#10482 Nitro</td><td class="mono">R$ 24,90</td><td class="mono" style="color:var(--acc)">R$ 24,18</td></tr>
-              <tr><td>#10481 Valorant</td><td class="mono">R$ 89,00</td><td class="mono" style="color:var(--acc)">R$ 86,42</td></tr>
-              <tr><td>#10479 Spotify</td><td class="mono">R$ 19,90</td><td class="mono" style="color:var(--acc)">R$ 19,32</td></tr>
-            </tbody></table>
-          </div>
-        </div>
-      </section>
-      <section class="view" id="v-coupons">
-        <div class="grid2e">
-          <div class="card"><div class="card-head"><div><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.8 8.8a2 2 0 0 0 2.8 0l6.4-6.4a2 2 0 0 0 0-2.8z'/><circle cx='7' cy='7' r='1.2'/></svg> Cupons de desconto</h3><div class="sub">Globais ou por produto</div></div><button class="btn sm">+ Cupom</button></div>
-            <table><thead><tr><th>Código</th><th>Desconto</th><th>Usos</th><th>Status</th></tr></thead><tbody>
-              <tr><td class="mono">BEMVINDO10</td><td>10%</td><td class="mono">142 / ∞</td><td><span class="tag t-ok"><span class="d"></span>ativo</span></td></tr>
-              <tr><td class="mono">BLACKFRIDAY</td><td>30%</td><td class="mono">88 / 100</td><td><span class="tag t-ok"><span class="d"></span>ativo</span></td></tr>
-              <tr><td class="mono">NITRO5</td><td>R$ 5,00</td><td class="mono">200 / 200</td><td><span class="tag t-fail"><span class="d"></span>esgotado</span></td></tr>
-            </tbody></table>
-          </div>
-          <div class="card"><div class="card-head"><div><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2 0-2.8a2 2 0 0 0-3 0zM12 15l-3-3a16 16 0 0 1 7-9c2.5 0 4 1.5 5 4a16 16 0 0 1-9 8zM9 12H4s.5-3 2-4 5 0 5 0M12 15v5s3-.5 4-2 0-5 0-5'/></svg> Drops agendados</h3><div class="sub">Lançamentos com hora marcada</div></div><button class="btn sm">+ Drop</button></div>
-            <div class="flow">
-              <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'/><path d='m3.3 7 8.7 5 8.7-5M12 22V12'/></svg></div><div><h5>Contas Steam — lote 50un</h5><p>Hoje às 20:00 · notifica @everyone · 50 em estoque</p></div><span class="tag t-wait"><span class="d"></span>em 4h</span></div>
-              <div class="flow-step"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'/><path d='m3.3 7 8.7 5 8.7-5M12 22V12'/></svg></div><div><h5>Gift Cards R$100</h5><p>Amanhã às 18:00 · preço promocional</p></div><span class="tag t-cyan">agendado</span></div>
-            </div>
-          </div>
-        </div>
-        <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='3' y='8' width='18' height='4' rx='1'/><path d='M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8'/><path d='M12 8S10.5 3 8 3a2.5 2.5 0 0 0 0 5zM12 8s1.5-5 4-5a2.5 2.5 0 0 1 0 5z'/></svg> Gift Cards</h3><div class="sub">Crédito que o cliente compra e presenteia</div>
-          <div class="chips"><div class="chip on">R$ 25 · 14 vendidos</div><div class="chip on">R$ 50 · 31 vendidos</div><div class="chip on">R$ 100 · 9 vendidos</div><div class="chip">+ criar valor</div></div>
-        </div>
-      </section>
-      <section class="view" id="v-tickets">
-        <div class="kpis k3">
-          <div class="kpi"><div class="lbl">Tickets abertos</div><div class="val">3</div><div class="delta neu">1 urgente</div></div>
-          <div class="kpi"><div class="lbl">Resolvidos pela IA</div><div class="val" style="color:var(--acc)">68%</div><div class="delta up">sem staff</div></div>
-          <div class="kpi"><div class="lbl">Tempo médio resposta</div><div class="val">2,1 min</div><div class="delta up">▼ com IA</div></div>
-        </div>
-        <div class="grid2">
-          <div class="card" style="padding:0"><div style="padding:20px 20px 0"><h3>Tickets</h3><div class="sub">Abertos automaticamente pelo bot</div></div>
-            <div class="flow-step" style="border-top:1px solid var(--line)"><div class="n" style="background:var(--bad-dim);color:var(--bad);border-color:#3a1d24"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'/><path d='M12 9v4M12 17h.01'/></svg></div><div><h5>Não recebi minha key — #10477</h5><p>@anaclara · há 35 min · produto esgotou na compra</p></div><span class="tag t-fail"><span class="d"></span>urgente</span></div>
-            <div class="flow-step" style="border-top:1px solid var(--line)"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg></div><div><h5>Como uso o cargo VIP?</h5><p>@pedrooo · há 1h · respondido pela IA</p></div><span class="tag t-ok">IA</span></div>
-            <div class="flow-step" style="border-top:1px solid var(--line)"><div class="n"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg></div><div><h5>PIX não confirmou</h5><p>@gamer_zr · há 2h · aguardando verificação</p></div><span class="tag t-wait"><span class="d"></span>aberto</span></div>
-          </div>
-          <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x='4' y='8' width='16' height='12' rx='2'/><path d='M12 8V4M9 4h6M8.5 13h.01M15.5 13h.01M9 17h6'/></svg> IA no atendimento (Gemini)</h3><div class="sub">Responde quando a staff está offline · para quando alguém assume</div>
-            <div style="margin:8px 0">
-              <div class="bubble user"><small>@pedrooo</small>como eu uso o cargo VIP que comprei?</div>
-              <div class="bubble ai"><small>Eternity IA · treinada com seu FAQ</small>Seu cargo VIP já foi aplicado automaticamente! Ele dá acesso aos canais exclusivos e 10% de desconto nas próximas compras. Qualquer dúvida, a equipe assume em instantes.</div>
-            </div>
-            <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 6.8 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1-2.7H3a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 4.6 6.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1H10a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 2.7 1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1 2.7h.1a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.2 1z'/></svg></div><div class="ct"><b>Modelo: Gemini 2.5 Flash</b><p>Treinável com FAQ, políticas e exemplos da loja</p></div><div class="toggle on"></div></div>
-          </div>
-        </div>
-      </section>
-      <section class="view" id="v-affiliates">
-        <div class="kpis k3">
-          <div class="kpi"><div class="lbl">Revendedores ativos</div><div class="val">23</div><div class="delta up">▲ 4 no mês</div></div>
-          <div class="kpi"><div class="lbl">Vendas por indicação</div><div class="val">R$ 8.420</div><div class="delta up">17% do total</div></div>
-          <div class="kpi"><div class="lbl">Comissões a pagar</div><div class="val">R$ 1.260</div><div class="delta neu">via split</div></div>
-        </div>
-        <div class="card"><div class="card-head"><div><h3>Revendedores</h3><div class="sub">Desconto automático e comissão por venda</div></div><button class="btn">+ Convidar revendedor</button></div>
-          <table><thead><tr><th>Revendedor</th><th>Desconto</th><th>Vendas</th><th>Comissão</th><th>Status</th></tr></thead><tbody>
-            <tr><td class="mono">@reseller_top</td><td>50%</td><td class="mono">142</td><td class="mono" style="color:var(--acc)">R$ 640</td><td><span class="tag t-ok"><span class="d"></span>ativo</span></td></tr>
-            <tr><td class="mono">@vendedor_x</td><td>40%</td><td class="mono">88</td><td class="mono" style="color:var(--acc)">R$ 380</td><td><span class="tag t-ok"><span class="d"></span>ativo</span></td></tr>
-            <tr><td class="mono">@novato_22</td><td>30%</td><td class="mono">12</td><td class="mono" style="color:var(--acc)">R$ 90</td><td><span class="tag t-wait"><span class="d"></span>avaliação</span></td></tr>
-          </tbody></table>
-        </div>
-        <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1'/></svg> Programa de convites</h3><div class="sub">Membros ganham saldo ao trazer amigos</div>
-          <div class="chips"><div class="chip on">Recompensa: R$ 2,00 por indicação válida</div><div class="chip">Top indicador: @lucas_dev (38)</div></div>
-        </div>
-      </section>
-      <section class="view" id="v-economy">
-        <div class="card"><h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='M14.8 9a3 3 0 0 0-2.8-2c-1.7 0-3 1-3 2.4 0 3.3 6 1.6 6 4.8 0 1.5-1.5 2.5-3.2 2.5A3 3 0 0 1 9 17M12 6v1.5M12 17v1.5'/></svg> Economia do servidor</h3><div class="sub">Moeda própria, loja de itens e engajamento</div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='M14.8 9a3 3 0 0 0-2.8-2c-1.7 0-3 1-3 2.4 0 3.3 6 1.6 6 4.8 0 1.5-1.5 2.5-3.2 2.5A3 3 0 0 1 9 17M12 6v1.5M12 17v1.5'/></svg></div><div class="ct"><b>Moeda interna — "Gemas"</b><p>Ganha por atividade, missões e compras (cashback)</p></div><div class="toggle on"></div></div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='8' cy='21' r='1'/><circle cx='19' cy='21' r='1'/><path d='M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 2-1.58l1.65-7.42H5.12'/></svg></div><div class="ct"><b>Loja de itens</b><p>Troca de gemas por cargos, descontos e produtos</p></div><div class="toggle on"></div></div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='5'/><circle cx='12' cy='12' r='1'/></svg></div><div class="ct"><b>Missões diárias</b><p>Tarefas que dão gemas e mantêm o servidor ativo</p></div><div class="toggle on"></div></div>
-          <div class="cfg-row"><div class="ci"><svg class="ico-ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d='M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.6V17a2 2 0 0 1-2 2H7M14 14.6V17a2 2 0 0 0 2 2h1M18 2H6v7a6 6 0 0 0 12 0z'/></svg></div><div class="ct"><b>Ranking</b><p>Tabela de líderes por gemas / atividade / compras</p></div><div class="toggle on"></div></div>
-        </div>
-        <div class="grid2e">
-          <div class="card"><h3>Top membros (gemas)</h3><div class="sub">Ranking do mês</div>
-            <table><tbody>
-              <tr><td>1º @lucas_dev</td><td class="mono" style="text-align:right;color:var(--warn)">12.400</td></tr>
-              <tr><td>2º @mari.gg</td><td class="mono" style="text-align:right">9.880</td></tr>
-              <tr><td>3º @pedrooo</td><td class="mono" style="text-align:right">7.210</td></tr>
-            </tbody></table>
           </div>
           <div class="card"><h3>Loja de itens</h3><div class="sub">Resgates com gemas</div>
             <div class="chips"><div class="chip">Cargo Lendário · 5.000</div><div class="chip">Cupom 15% · 2.000</div><div class="chip">Nitro · 8.000</div></div>
@@ -588,7 +469,7 @@ Entrega **automática** após o pagamento via PIX. Qualquer dúvida, abra um tic
           <div class="card"><h3>Conversão do funil</h3><div class="sub">Do clique à entrega</div>
             <div class="statline"><span>Abriram a loja</span><b>4.812</b></div><div class="progress"><i style="width:100%;background:var(--acc2)"></i></div>
             <div class="statline"><span>Geraram PIX</span><b>1.803</b></div><div class="progress"><i style="width:37%;background:var(--acc2)"></i></div>
-            <div class="statline"><span>Pagaram</span><b>1.284</b></div><div class="progress"><i style="width:27%;background:var(--acc)"></i></div>
+            <div class="statline"><span>Pagaram</span><b>0</b></div><div class="progress"><i style="width:27%;background:var(--acc)"></i></div>
             <div class="note" style="margin-top:8px">71% de quem gera o PIX conclui o pagamento — acima da média.</div>
           </div>
         </div>
@@ -998,38 +879,71 @@ Entrega **automática** após o pagamento via PIX. Qualquer dúvida, abra um tic
   // ── DASHBOARD ──────────────────────────────────────────────────────────
   function renderDashboard(stats) {
     const r = stats.revenue || {};
+    const total = Number(r.total || 0);
+    const delivered = Number(r.delivered || 0);
+    const pending = Number(r.pending || 0);
+    const ticket = delivered > 0 ? (total / delivered) : 0;
 
-    // KPIs
-    const kpis = document.querySelectorAll('#v-dash .kpi .val');
-    if (kpis[0]) kpis[0].textContent = `R$ ${fmt(r.total)}`;
-    if (kpis[1]) kpis[1].textContent = r.delivered || '0';
-    if (kpis[2]) kpis[2].textContent = r.pending || '0';
-    const ticket = r.delivered > 0 ? (r.total / r.delivered) : 0;
-    if (kpis[3]) kpis[3].textContent = `R$ ${fmt(ticket)}`;
+    // KPIs por ID — nunca falha mesmo se o seletor mudar
+    const elRev = document.getElementById('kpi-revenue');
+    const elSales = document.getElementById('kpi-sales');
+    const elTicket = document.getElementById('kpi-ticket');
+    const elPending = document.getElementById('kpi-pending');
+    if (elRev) elRev.textContent = `R$ ${fmt(total)}`;
+    if (elSales) elSales.textContent = delivered;
+    if (elTicket) elTicket.textContent = `R$ ${fmt(ticket)}`;
+    if (elPending) { elPending.textContent = pending; elPending.style.color = pending > 0 ? 'var(--warn)' : ''; }
+
+    // Donut de métodos — dinâmico
+    const methodsWrap = document.getElementById('methods-wrap');
+    if (methodsWrap) {
+      if (delivered === 0) {
+        methodsWrap.innerHTML = '<div style="text-align:center;padding:32px;color:var(--txt3);font-size:13px">Sem vendas ainda.<br>Distribuição aparecerá quando houver dados.</div>';
+      } else {
+        methodsWrap.innerHTML = `
+          <div class="donut-wrap">
+            <div class="donut" style="background:conic-gradient(var(--acc) 0 100%)">
+              <div class="center"><b>${delivered}</b><small>vendas</small></div>
+            </div>
+            <div class="legend">
+              <div><i style="background:var(--acc)"></i> Total entregue <b>${delivered}</b></div>
+              ${pending > 0 ? `<div><i style="background:var(--warn)"></i> Aguardando <b>${pending}</b></div>` : ''}
+            </div>
+          </div>`;
+      }
+    }
 
     // Tabela de vendas recentes
     const tbody = document.querySelector('#v-dash table tbody');
-    if (tbody && stats.recentSales?.length) {
-      tbody.innerHTML = stats.recentSales.map(s => `
-        <tr>
-          <td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx='7.5' cy='15.5' r='4.5'/><path d='m10.5 12.5 8-8'/></svg></div><div>${s.product_name||'Produto'}<small>${s.emoji||''}</small></div></div></td>
-          <td class="mono">${s.buyer_tag||s.buyer_discord_id||'—'}</td>
-          <td class="mono">R$ ${fmt(s.unit_price||s.total)}</td>
-          <td><span class="tag t-auto">PIX</span></td>
-          <td>${statusTag(s.status)}</td>
-          <td class="mono" style="color:var(--txt3)">${timeAgo(s.created_at)}</td>
-        </tr>`).join('');
-    } else if (tbody) {
-      tbody.innerHTML = empty('Sem vendas ainda. Quando o bot processar a primeira venda, ela aparece aqui.');
+    if (tbody) {
+      if (stats.recentSales?.length) {
+        tbody.innerHTML = stats.recentSales.map(s => `
+          <tr>
+            <td><div class="prod"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.5 12.5 8-8"/></svg></div><div>${s.product_name||'Produto'}<small>${s.emoji||''}</small></div></div></td>
+            <td class="mono">${s.buyer_tag||s.buyer_discord_id||'—'}</td>
+            <td class="mono">R$ ${fmt(s.unit_price||s.total||0)}</td>
+            <td><span class="tag t-auto">${s.payment_method||'PIX'}</span></td>
+            <td>${statusTag(s.status)}</td>
+            <td class="mono" style="color:var(--txt3)">${timeAgo(s.created_at)}</td>
+          </tr>`).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:32px">Sem vendas ainda. Quando o bot processar a primeira venda, ela aparece aqui.</td></tr>';
+      }
     }
 
     // Gráfico de barras
     if (stats.salesByDay?.length) {
       buildChart(
-        stats.salesByDay.map(d => ({ v: Number(d.revenue), label: `R$ ${fmt(d.revenue)}` })),
+        stats.salesByDay.map(d => ({ v: Number(d.revenue||0), label: `R$ ${fmt(d.revenue||0)}` })),
         stats.salesByDay.map(d => new Date(d.day).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}).slice(0,5)),
         'chart', 'chartx'
       );
+    } else {
+      // Limpar o gráfico quando não há dados
+      const chart = document.getElementById('chart');
+      const chartx = document.getElementById('chartx');
+      if (chart) chart.innerHTML = '<div style="text-align:center;padding:40px;color:var(--txt3)">Sem vendas nos últimos 14 dias.</div>';
+      if (chartx) chartx.innerHTML = '';
     }
   }
 
